@@ -207,6 +207,15 @@ export const referenceCategories: ReferenceCategory[] = [
         examples: [{ label: 'Filtro resonante', code: 's("bd sd, hh*8").lpf(2000).lpq("<0 10 20 30>")' }],
       },
       {
+        name: '.bpf() / .bpq()',
+        syntax: '.bpf(frecuencia) / .bpq(resonancia)',
+        description: 'Filtro paso-banda (band-pass): deja pasar solo una franja de frecuencias alrededor del centro que indiques. bpq controla lo estrecha/resonante que es esa franja.',
+        examples: [
+          { label: 'Centro variable', code: 's("bd sd [~ bd] sd,hh*6").bpf("<1000 2000 4000 8000>")' },
+          { label: 'Con resonancia', code: 's("bd sd [~ bd] sd").bpf(500).bpq("<0 1 2 3>")' },
+        ],
+      },
+      {
         name: '.gain()',
         syntax: '.gain(cantidad)',
         description: 'Volumen relativo de cada evento (multiplicador exponencial). Es la base de la dinámica rítmica.',
@@ -239,6 +248,48 @@ export const referenceCategories: ReferenceCategory[] = [
         syntax: '.pan(posición)',
         description: 'Posición estéreo del sonido, de 0 (izquierda) a 1 (derecha).',
         examples: [{ label: 'Barrido estéreo', code: 's("numbers:1 numbers:2 numbers:3 numbers:4").pan("0 .3 .6 1")' }],
+      },
+      {
+        name: '.vib() / .vibmod()',
+        syntax: '.vib(frecuencia) / .vibmod(profundidad)',
+        description: 'Vibrato: modula la afinación con un oscilador. vib() fija la velocidad del vibrato en Hz; vibmod() su profundidad en semitonos (solo tiene efecto si vib() está activo). Formato corto: "frecuencia:profundidad".',
+        examples: [
+          { label: 'Vibrato progresivo', code: 'note("a e").vib("<.5 1 2 4 8 16>")' },
+          { label: 'Con profundidad fija', code: 'note("a e").vib(4).vibmod("<.25 .5 1 2 12>")' },
+        ],
+      },
+      {
+        name: '.penv() .pattack() .pdecay() .prelease()',
+        syntax: '.penv(semitonos)',
+        description: 'Envolvente de afinación (pitch envelope): igual que la envolvente ADSR pero aplicada a la altura en vez de al volumen — la nota "desliza" desde/hacia penv() semitonos de distancia. attack/decay/release funcionan igual que en el volumen. pcurve() controla si la curva es lineal (0) o exponencial (1, mejor para bombos).',
+        examples: [
+          { label: 'Golpe con pitch descendente', code: 'note("c").penv("<12 7 1 0 -7 -12>")' },
+          { label: 'Ataque de afinación progresivo', code: 'note("c eb g bb").pattack("0 .1 .25 .5").slow(2)' },
+        ],
+      },
+      {
+        name: '.tremolo() / .tremolosync()',
+        syntax: '.tremolo(hz) / .tremolosync(ciclos)',
+        description: 'Modula el volumen con un oscilador continuo (trémolo). tremolo() fija la velocidad en Hz; tremolosync() la sincroniza a un número de ciclos. .tremoloskew() deforma la onda de modulación.',
+        examples: [{ label: 'Trémolo sincronizado', code: 'note("d d d# d".fast(4)).s("supersaw").tremolosync("4").tremoloskew("<1 .5 0>")' }],
+      },
+      {
+        name: '.compressor()',
+        syntax: '.compressor("umbral:ratio:knee:attack:release")',
+        description: 'Compresor de dinámica — reduce el rango entre lo más flojo y lo más fuerte, típico para que una mezcla "empuje" más.',
+        examples: [{ label: 'Compresión de batería', code: 's("bd sd [~ bd] sd,hh*8").compressor("-20:20:10:.002:.02")' }],
+      },
+      {
+        name: '.orbit() / .duckorbit()',
+        syntax: '.orbit(n) / .duckorbit(n).duckattack(t).duckdepth(d)',
+        description: 'Un "orbit" es un contexto de efectos globales compartido: patrones con el mismo orbit comparten el mismo delay/room. duckorbit() crea un efecto de sidechain — el orbit indicado baja de volumen cada vez que suena esta capa (como un bombo "empujando" al bajo).',
+        examples: [
+          { label: 'Dos capas con reverbs independientes', code: 'stack(\n  s("hh*6").delay(.5).delaytime(.25).orbit(1),\n  s("~ sd ~ sd").delay(.5).delaytime(.125).orbit(2)\n)' },
+          {
+            label: 'Sidechain clásico (bombo empuja bajo)',
+            code: '$: n(run(16)).scale("c:minor:pentatonic").s("sawtooth").delay(.7).orbit(2)\n$: s("bd:4!4").duckorbit(2).duckattack(0.2).duckdepth(1)',
+          },
+        ],
       },
       {
         name: '.distort()',
@@ -338,6 +389,39 @@ export const referenceCategories: ReferenceCategory[] = [
           { label: 'Alineación por defecto (in)', code: 'note("0 1 2".add("10 20"))' },
           { label: 'squeeze: ciclo entero por paso', code: 'note("0 1 2".add.squeeze("10 20"))' },
         ],
+      },
+      {
+        name: 'chunk()',
+        syntax: '.chunk(n, fn)',
+        description: 'Divide el patrón en n partes iguales y va aplicando fn a una parte distinta cada ciclo (recorriéndolas por turnos) — como un .every() pero que se desplaza por el patrón en vez de repetirse siempre igual.',
+        examples: [{ label: 'Transportar un trozo distinto cada ciclo', code: '"0 1 2 3".chunk(4, x=>x.add(7)).scale("A:minor").note()' }],
+      },
+      {
+        name: 'arrange()',
+        syntax: 'arrange([ciclos, patrón], [ciclos, patrón], ...)',
+        description: 'Encadena varios patrones a lo largo de varios ciclos cada uno — la forma más directa de dar estructura de "canción" (intro, estrofa, etc.) combinando bloques de duración distinta.',
+        examples: [{ label: 'Dos secciones de distinta duración', code: 'arrange(\n  [4, "<c a f e>(3,8)"],\n  [2, "<g a>(5,8)"]\n).note()' }],
+      },
+      {
+        name: 'pick() / pickF()',
+        syntax: '.pick([patrón1, patrón2, ...]) / .pickF(patrón, [fn1, fn2, ...])',
+        description: 'pick() selecciona, para cada evento, un patrón completo de una lista (o tabla con nombres) según un índice — como un n() pero para patrones enteros en vez de números. pickF() hace lo mismo pero elige qué función aplicar de una lista.',
+        examples: [
+          { label: 'Elegir subpatrón por índice', code: 'sound("<0 1 [2,0]>".pick(["bd sd", "cp cp", "hh hh"]))' },
+          { label: 'Elegir transformación por índice', code: 's("bd [rim hh]").pickF("<0 1 2>", [rev, jux(rev), fast(2)])' },
+        ],
+      },
+      {
+        name: 'squeeze()',
+        syntax: '.squeeze([patrón1, patrón2, ...])',
+        description: 'Como pick(), pero el patrón elegido se comprime entero para caber en la duración del evento seleccionador, en vez de solo tocar un instante de él.',
+        examples: [{ label: 'Frase completa comprimida por paso', code: 'note("<0@2 [1!2] 2>".squeeze(["g a", "f g f g", "g a c d"]))' }],
+      },
+      {
+        name: 'xfade()',
+        syntax: 'xfade(patrónA, cantidad, patrónB)',
+        description: 'Crossfade entre dos patrones: 0 = solo A, 1 = solo B, .5 = mezcla a partes iguales.',
+        examples: [{ label: 'Cruce de batería a hats', code: 'xfade(s("bd*2"), "<0 .25 .5 .75 1>", s("hh*8"))' }],
       },
     ],
   },
