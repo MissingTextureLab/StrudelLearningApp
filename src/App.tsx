@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { ErrorBoundary } from './components/ErrorBoundary'
 import { LessonPanel } from './components/LessonPanel'
 import { Playground, type PlaygroundHandle } from './components/Playground'
 import { ReferencePanel } from './components/ReferencePanel'
@@ -59,7 +60,9 @@ function App() {
       </aside>
 
       <main className="min-w-0 flex-1 lg:overflow-y-auto lg:pr-1">
-        <Playground ref={playgroundRef} onPatternSaved={refreshPatterns} />
+        <ErrorBoundary>
+          <Playground ref={playgroundRef} onPatternSaved={refreshPatterns} />
+        </ErrorBoundary>
       </main>
     </div>
   )
