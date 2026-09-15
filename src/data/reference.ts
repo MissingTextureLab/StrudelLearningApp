@@ -50,6 +50,43 @@ export const referenceCategories: ReferenceCategory[] = [
           { label: 'Synth con filtro', code: 'note("c3 bb2 f3 eb3").sound("sawtooth").lpf(600)' },
         ],
       },
+      {
+        name: 'aliasBank()',
+        syntax: "aliasBank('Alias', 'BancoOriginal')",
+        description:
+          'Registra un alias para un banco de sonidos existente, para poder referirte a él con otro nombre en .bank().',
+        examples: [],
+      },
+      {
+        name: '.begin() / .end()',
+        syntax: '.begin(0-1) / .end(0-1)',
+        description:
+          'Recortan el sample por su inicio o su final: begin(.25) salta el primer cuarto del sample; end(.5) corta a partir de la mitad. Se combinan para tocar solo un fragmento concreto.',
+        examples: [
+          { label: 'Empezar en distintos puntos del sample', code: 'samples({ rave: \'rave/AREUREADY.wav\' }, \'github:tidalcycles/dirt-samples\')\ns("rave").begin("<0 .25 .5 .75>").fast(2)' },
+        ],
+      },
+      {
+        name: '.chop()',
+        syntax: '.chop(n)',
+        description:
+          'Corta cada sample en n fragmentos iguales, convirtiendo un patrón de samples en un patrón de fragmentos de esos samples — la base de la "síntesis granular". Se combina bien con .rev() o .loopAt() para reordenar o estirar los fragmentos.',
+        examples: [{ label: 'Granular con reverso', code: 's("break").chop(4).rev().loopAt(2)' }],
+      },
+      {
+        name: '.coarse()',
+        syntax: '.coarse(n)',
+        description:
+          'Reduce la resolución temporal del audio quedándose solo con 1 de cada n muestras (submuestreo) — un efecto lo-fi distinto al bitcrusher de .crush(), que reduce la resolución de amplitud en vez de la de tiempo.',
+        examples: [{ label: 'Degradación progresiva', code: 's("bd sd, hh*8").coarse("<1 4 8 16>")' }],
+      },
+      {
+        name: '.byteBeatExpression() / .byteBeatStartTime()',
+        syntax: 's("bytebeat").byteBeatExpression("expresión")',
+        description:
+          'Bytebeat es una técnica de síntesis que genera audio a partir de fórmulas matemáticas a nivel de bit sobre un contador de tiempo (t). byteBeatExpression() (alias bbexpr/bb) define esa fórmula; byteBeatStartTime() (alias bbst) fija el valor inicial de t, en muestras.',
+        examples: [{ label: 'Expresión bytebeat propia', code: 's("bytebeat").bbexpr(\'t*(t>>15^t>>66)\')' }],
+      },
     ],
   },
   {
@@ -103,6 +140,34 @@ export const referenceCategories: ReferenceCategory[] = [
         description:
           'Controla el tono directamente en Hz, sin pasar por notas ni escalas. note() por debajo es en realidad freq() + una conversión: MIDI 69 (A4) = 440Hz, y cada octava dobla la frecuencia. Útil para sonido más "físico" o microtonal.',
         examples: [{ label: 'Frecuencias directas', code: 'freq("200 300 400 500").s("sine")' }],
+      },
+      {
+        name: 'addVoicings()',
+        syntax: "addVoicings('nombre', diccionario, [notaMín, notaMáx])",
+        description:
+          'Registra un diccionario propio de voicings (bajo un nombre) para usarlo luego con .voicing(\'nombre\'), igual que los diccionarios que ya vienen incluidos en Strudel.',
+        examples: [
+          {
+            label: 'Diccionario de voicings propio',
+            code: "addVoicings('cookie', {\n  7: ['3M 7m 9M 12P 15P', '7m 10M 13M 16M 19P'],\n  m7: ['8P 11P 14m 17m 19P', '5P 8P 11P 14m 17m'],\n}, ['C3', 'C6'])\n\n\"<C7 Dm7>\".chord().voicing('cookie').note()",
+          },
+        ],
+      },
+      {
+        name: '.anchor()',
+        syntax: '.anchor("nota")',
+        description:
+          'Fija la nota de referencia a la que se ajustan .voicing() o .scale() al buscar la posición más cercana. Por defecto es c5.',
+        examples: [{ label: 'Ancla distinta cada ciclo', code: 'anchor("<c4 g4 c5 g5>").chord("C").voicing()' }],
+      },
+      {
+        name: '.arp() / .arpWith()',
+        syntax: '.arp("patrón de índices")',
+        description:
+          'Arpegia un acorde (notas apiladas con comas dentro de un mismo evento): selecciona qué nota(s) del acorde suenan según un patrón de índices. .arpWith() permite elegir con una función arbitraria en vez de una lista de índices.',
+        examples: [
+          { label: 'Arpegio sobre acordes cambiantes', code: 'note("<[c,eb,g]!2 [c,f,ab] [d,f,ab]>").arp("0 [0,2] 1 [0,2]")' },
+        ],
       },
     ],
   },
@@ -303,6 +368,47 @@ export const referenceCategories: ReferenceCategory[] = [
         description: 'Bitcrusher: reduce la resolución del sample. 1 = drástico, 16 = casi imperceptible.',
         examples: [{ label: 'Crush progresivo', code: 's("<bd sd>,hh*3").crush("<16 8 4 2>")' }],
       },
+      {
+        name: '.bpattack() .bpdecay() .bpsustain() .bprelease()',
+        syntax: '.bpattack(t).bpdecay(t).bpsustain(nivel).bprelease(t)',
+        description:
+          'Envolvente ADSR aplicada a la frecuencia central del filtro paso-banda (.bpf()), igual que .lpattack()/.hpattack() para los filtros paso-bajo/paso-alto: la frecuencia de corte se mueve con su propia envolvente en vez de quedarse fija.',
+        examples: [{ label: 'Barrido descendente del centro', code: 'note("c e g").s("sawtooth").bpf(1200).bpenv(-24).bpattack(.01).bpdecay(.2).bpsustain(0)' }],
+      },
+      {
+        name: '.bprate() .bpdepth() .bpshape() .bpskew() .bpsync() .bpdc() .bpdepthfrequency()',
+        syntax: '.bprate(hz) / .bpsync(ciclos)',
+        description:
+          'LFO que modula la frecuencia central del filtro paso-banda: bprate fija su velocidad en Hz, bpsync la sincroniza a un número de ciclos, bpdepth/bpdepthfrequency la profundidad (relativa o en Hz), bpshape/bpskew la forma de la onda, y bpdc su desplazamiento (DC offset).',
+        examples: [{ label: 'Barrido del centro con LFO', code: 'note("<c c c# c c c4>*16").s("sawtooth").bpf(600).bpdepthfrequency("<200 500 100 0>")' }],
+      },
+      {
+        name: '.distorttype()',
+        syntax: '.distorttype("asym" | "chebyshev" | "cubic" | ...)',
+        description:
+          'Elige el algoritmo de waveshaping usado por .distort(). Cada tipo tiene un carácter distinto: asym es distorsión de diodo asimétrica, chebyshev usa polinomios de Chebyshev, cubic es una curva cúbica simple.',
+        examples: [{ label: 'Comparar tipos de distorsión', code: 's("bd sd, hh*8").distort(4).distorttype("<asym chebyshev cubic>")' }],
+      },
+      {
+        name: '.chorus()',
+        syntax: '.chorus(cantidad)',
+        description: 'Mezcla de un efecto de chorus (varias copias ligeramente desafinadas y desplazadas en el tiempo) para engrosar el sonido.',
+        examples: [{ label: 'Chorus en un synth', code: 'note("d d a# a").s("sawtooth").chorus(.5)' }],
+      },
+      {
+        name: '.clip() / .legato()',
+        syntax: '.clip(factor)',
+        description:
+          'Multiplica la duración de cada nota por el factor indicado, y recorta el sample si se pasa de esa duración. Con factores menores que 1 se acortan las notas (staccato); mayores que 1 se alargan (legato).',
+        examples: [{ label: 'De staccato a legato', code: 'note("c a f e").s("piano").clip("<.5 1 2>")' }],
+      },
+      {
+        name: '.cut()',
+        syntax: '.cut(grupo)',
+        description:
+          'Como en las cajas de ritmos clásicas: al asignar el mismo número de "cutgroup" a varios sonidos, uno corta al anterior en cuanto empieza — típico para simular un hi-hat abierto interrumpido por uno cerrado.',
+        examples: [{ label: 'Hi-hats que se cortan entre sí', code: 's("[oh hh]*4").cut(1)' }],
+      },
     ],
   },
   {
@@ -423,6 +529,65 @@ export const referenceCategories: ReferenceCategory[] = [
         description: 'Crossfade entre dos patrones: 0 = solo A, 1 = solo B, .5 = mezcla a partes iguales.',
         examples: [{ label: 'Cruce de batería a hats', code: 'xfade(s("bd*2"), "<0 .25 .5 .75 1>", s("hh*8"))' }],
       },
+      {
+        name: '.add()',
+        syntax: '.add(cantidad)',
+        description:
+          'Suma un número (o patrón de números) a cada valor de un patrón numérico. Con note()/n() la suma es en semitonos o grados; por debajo, Strudel convierte las notas a números MIDI antes de sumar.',
+        examples: [
+          { label: 'Transposición distinta cada ciclo', code: 'n("0 2 4".add("<0 3 4 0>")).scale("C:major")' },
+        ],
+      },
+      {
+        name: '.apply()',
+        syntax: '.apply(fn)',
+        description: 'Aplica una función guardada al patrón completo — como .layer() pero con una sola función en vez de una lista.',
+        examples: [{ label: 'Aplicar una transposición diatónica guardada', code: '"<c3 eb3 g3>".scale(\'C minor\').apply(scaleTranspose("0,2,4")).note()' }],
+      },
+      {
+        name: 'all()',
+        syntax: 'all(fn)',
+        description:
+          'Aplica una función a todos los patrones activos a la vez, agrupándolos primero en un único stack. Solo detecta patrones declarados con una etiqueta ($:) — un patrón suelto sin $: no se ve afectado. Para aplicar la función a cada patrón por separado en vez de al conjunto, existe each().',
+        examples: [{ label: 'Acelerar todas las capas a la vez', code: '$: sound("bd - cp sd")\n$: sound("hh*8")\nall(fast("<2 3>"))' }],
+      },
+      {
+        name: '.compress()',
+        syntax: '.compress(inicio, fin)',
+        description: 'Comprime cada ciclo del patrón dentro del intervalo de tiempo indicado (entre 0 y 1), dejando el resto del ciclo en silencio.',
+        examples: [{ label: 'Un patrón comprimido a la segunda mitad', code: 'cat(\n  s("bd sd").compress(.25,.75),\n  s("~ bd sd ~")\n)' }],
+      },
+      {
+        name: '.brak()',
+        syntax: '.brak()',
+        description: 'En ciclos alternos, toca el patrón una vez, al doble de velocidad y desplazado un cuarto de ciclo — un efecto clásico de breakbeat.',
+        examples: [{ label: 'Breakbeat sobre una batería', code: 's("bd sd [~ bd] sd").brak()' }],
+      },
+      {
+        name: '.bite()',
+        syntax: '.bite(n, "índices")',
+        description: 'Divide el patrón en n partes iguales y las reproduce según una secuencia de índices — como .slice() pero para patrones enteros en vez de para un sample de audio.',
+        examples: [{ label: 'Reordenar una escala por índices', code: 'note("0 1 2 3 4 5 6 7".scale(\'c:mixolydian\'))\n.bite(4, "3 2 1 0")' }],
+      },
+      {
+        name: '.chunkBack() / .chunkInto() / .chunkBackInto()',
+        syntax: '.chunkInto(n, fn)',
+        description:
+          'Variantes de .chunk(): chunkInto aplica fn a un sub-ciclo en bucle de esa parte en vez de a la parte simple; chunkBack recorre las partes en orden inverso; chunkBackInto combina ambos comportamientos.',
+        examples: [{ label: 'Doble velocidad en un fragmento distinto cada ciclo, en bucle', code: 'sound("bd sd ht lt bd - cp lt").chunkInto(4, hurry(2)).bank("tr909")' }],
+      },
+      {
+        name: '.as()',
+        syntax: '.as("control1:control2:...")',
+        description: 'Reparte los valores separados por ":" dentro de la mini-notación entre varios controles nombrados a la vez, en un solo paso.',
+        examples: [{ label: 'Nota y clip en un solo patrón', code: '"c:.5 a:1 f:.25 e:.8".as("note:clip")' }],
+      },
+      {
+        name: 'beat()',
+        syntax: '.beat("posiciones", pasos)',
+        description: 'Genera una estructura rítmica a partir de las posiciones (por número de paso) dentro de un total de pasos por ciclo — otra forma de construir ritmos además de la mini-notación o euclid().',
+        examples: [{ label: 'Bombo en los pasos 0, 7 y 10 de 16', code: 's("bd").beat("0,7,10", 16)' }],
+      },
     ],
   },
   {
@@ -453,6 +618,19 @@ export const referenceCategories: ReferenceCategory[] = [
         syntax: '.range(min, max)',
         description: 'Reescala la salida de una señal (0 a 1) al rango indicado. Es como se convierte una onda en un LFO útil para un parámetro concreto.',
         examples: [{ label: 'Filtro modulado en 4 ciclos', code: 'note("<c2 eb2 g2>*4").sound("sawtooth").lpf(sine.range(200,2000).slow(4))' }],
+      },
+      {
+        name: 'berlin',
+        syntax: 'berlin',
+        description:
+          'Ruido continuo "berlin" (como el ruido Perlin, pero basado en ondas de sierra en vez de curvas suaves) — pensado como broma por sus creadores, pero resultó ser un generador orgánico útil. Rango 0 a 1.',
+        examples: [{ label: 'Arpegios ascendentes con ruido berlin', code: 'n("0!16".add(berlin.fast(4).mul(14))).scale("d:minor")' }],
+      },
+      {
+        name: 'cosine / cosine2',
+        syntax: 'cosine | cosine2',
+        description: 'Onda coseno continua — como sine pero desfasada 90°. cosine da salida entre 0 y 1; cosine2 entre -1 y 1.',
+        examples: [{ label: 'Seno y coseno combinados', code: 'n(stack(sine,cosine).segment(16).range(0,15)).scale("C:minor")' }],
       },
     ],
   },
@@ -497,6 +675,35 @@ export const referenceCategories: ReferenceCategory[] = [
         description: 'Silencia los eventos donde la máscara vale 0 o ~, dejando pasar el resto — como struct pero solo puede quitar, no añadir eventos.',
         examples: [{ label: 'Silenciar el segundo tiempo', code: 'note("c [eb,g] d [eb,g]").mask("<1 [0 1]>")' }],
       },
+      {
+        name: '.choose2()',
+        syntax: '.choose2(a, b, ...)',
+        description: 'Como choose(), pero el patrón sobre el que se llama debe estar en el rango -1..1 en vez de 0..1 — útil con señales bipolares como sine2.',
+        examples: [{ label: 'Elegir con una señal bipolar', code: 'sine2.choose2("bd", "hh", "sd").s().fast(8)' }],
+      },
+      {
+        name: 'chooseCycles() / randcat()',
+        syntax: 'chooseCycles(p1, p2, ...)',
+        description:
+          'Elige uno de los patrones al azar en cada ciclo completo (a diferencia de choose(), que elige evento a evento). Equivale a usar "|" entre alternativas dentro de la mini-notación.',
+        examples: [
+          { label: 'Una caja distinta cada ciclo', code: 'chooseCycles("bd", "hh", "sd").s().fast(8)' },
+          { label: 'Notación equivalente con |', code: 's("bd | hh | sd").fast(8)' },
+        ],
+      },
+      {
+        name: '.chooseWith() / .chooseInWith()',
+        syntax: '.chooseWith(patrón, [opciones])',
+        description:
+          'Elige de una lista de valores usando un patrón de números (0..1) que tú controlas, en vez de aleatoriedad — por ejemplo una señal como sine. chooseInWith toma además la estructura rítmica del valor elegido en vez de la del patrón selector.',
+        examples: [{ label: 'Elegir sonido según una onda', code: 'note("c2 g2!2 d2 f1").s(chooseWith(sine.fast(2), ["sawtooth", "triangle", "bd:6"]))' }],
+      },
+      {
+        name: 'brand() / brandBy()',
+        syntax: 'brand | brandBy(probabilidad)',
+        description: 'Señal continua binaria (0 o 1) generada al azar. brandBy() permite fijar la probabilidad de que salga 1 (por defecto 50%).',
+        examples: [{ label: 'Panorama aleatorio entre izquierda y derecha', code: 's("hh*10").pan(brand)' }],
+      },
     ],
   },
   {
@@ -516,6 +723,12 @@ export const referenceCategories: ReferenceCategory[] = [
         syntax: 'hush()',
         description: 'Detiene y silencia todos los patrones activos. Equivale a pulsar Stop.',
         examples: [{ label: 'Parar todo', code: 'hush()' }],
+      },
+      {
+        name: '.cpm()',
+        syntax: '.cpm(ciclos por minuto)',
+        description: 'Fija el tempo de un patrón concreto en ciclos por minuto, igual que setcpm() pero solo para esa capa en vez de globalmente.',
+        examples: [{ label: 'Una capa a 90 ciclos por minuto', code: 's("<bd sd>,hh*2").cpm(90) // = 90 bpm' }],
       },
     ],
   },
@@ -544,6 +757,12 @@ export const referenceCategories: ReferenceCategory[] = [
         syntax: '._spectrum()',
         description: 'Analizador de espectro: muestra el contenido en frecuencias del audio en tiempo real.',
         examples: [{ label: 'Espectro de una melodía', code: 'n("<0 4 2 1>*3").scale("d3:minor:pentatonic").s("sine")._spectrum()' }],
+      },
+      {
+        name: '.color() / .colour()',
+        syntax: '.color("nombre o #hex")',
+        description: 'Fija el color con el que se resalta ese evento en visualizadores como .pianoroll() o el resaltado de la mini-notación.',
+        examples: [],
       },
     ],
   },
@@ -657,6 +876,110 @@ export const referenceCategories: ReferenceCategory[] = [
             code: 'await initHydra()\nlet pat = "3 4 5 [6 7]*2"\nshape(H(pat)).out(o0)\nn(pat).scale("A:minor").s("piano").room(1)',
           },
         ],
+      },
+      {
+        name: '.ccn() / .ccv() / .control()',
+        syntax: '.ccn(numero).ccv(valor)',
+        description:
+          'Envían mensajes MIDI CC (control change) por separado: ccn fija el número de controlador (0-127) y ccv su valor (0-127). .control() hace lo mismo pasando ambos números a la vez.',
+        examples: [],
+      },
+      {
+        name: 'defaultmidimap()',
+        syntax: 'defaultmidimap({ control: numeroCC })',
+        description:
+          'Configura a qué número de controlador MIDI CC se traduce cada control de Strudel (por ejemplo lpf) cuando se usa .midi(), sin tener que definir un "midimap" distinto cada vez.',
+        examples: [{ label: 'Mapear lpf al CC 74 por defecto', code: 'defaultmidimap({ lpf: 74 })\n$: note("c a f e").midi();\n$: lpf(sine.slow(4).segment(16)).midi();' }],
+      },
+      {
+        name: 'csoundm()',
+        syntax: '.csoundm()',
+        description:
+          'Envía cada evento a Csound (un lenguaje de síntesis externo) traducido a sus "pfields" con semántica MIDI: instrumento, tiempo, duración, nota y velocidad MIDI, más los controles de Strudel como texto adicional.',
+        examples: [],
+      },
+      {
+        name: '.channel() / .channels()',
+        syntax: '.channel(n) / .channels("a:b")',
+        description:
+          '.channel() elige a qué canal se envía el patrón; .channels() (alias ch) permite fijar directamente los canales de salida de la interfaz de audio — por ejemplo, enviar una capa al canal 3-4 de una tarjeta multicanal.',
+        examples: [{ label: 'Enviar a canales 3 y 4', code: 'note("e a d b g").channels("3:4")' }],
+      },
+    ],
+  },
+  {
+    id: 'sensors',
+    title: 'Sensores del dispositivo',
+    summary:
+      'Señales continuas (0 a 1) leídas de los sensores del dispositivo (móvil o portátil) a través del navegador — orientación, aceleración, etc. Requieren permiso del navegador y solo funcionan en dispositivos que tengan esos sensores.',
+    entries: [
+      {
+        name: 'absoluteOrientationAlpha / Beta / Gamma',
+        syntax: 'absoluteOrientationAlpha | absoluteOrientationBeta | absoluteOrientationGamma',
+        description:
+          'Orientación absoluta del dispositivo (respecto al norte magnético) en sus tres ejes, como señal continua entre 0 y 1. Alpha = rotación (compás), Beta = inclinación adelante/atrás, Gamma = inclinación izquierda/derecha. Alias cortos: absOriA/absOriZ, absOriB/absOriX, absOriG/absOriY.',
+        examples: [{ label: 'Melodía controlada por el compás del dispositivo', code: 'n(absoluteOrientationAlpha.segment(4).range(0,7)).scale("C:minor")' }],
+      },
+      {
+        name: 'accelerationX / Y / Z',
+        syntax: 'accelerationX | accelerationY | accelerationZ',
+        description: 'Valor del acelerómetro del dispositivo en cada eje, como señal continua entre 0 y 1. Alias cortos: accX, accY, accZ.',
+        examples: [{ label: 'Melodía controlada por el movimiento', code: 'n(accelerationX.segment(4).range(0,7)).scale("C:minor")' }],
+      },
+    ],
+  },
+  {
+    id: 'numgen',
+    title: 'Generadores de patrones numéricos',
+    summary:
+      'Funciones que crean patrones de números a partir de una fórmula o de la representación en binario/otra base de un número — útiles para generar ritmos o secuencias de forma programática en vez de escribirlas a mano.',
+    entries: [
+      {
+        name: 'base()',
+        syntax: 'base(numero, base, dígitos)',
+        description: 'Convierte un número (o patrón de números) a otra base numérica, con un número fijo de dígitos, y expande cada dígito como un evento independiente.',
+        examples: [{ label: 'Convertir a base 10 con 3 dígitos', code: '$: note(base("7175 543", 10, 3)).scale("c:major").s("saw")' }],
+      },
+      {
+        name: 'binary() / binaryL() / binaryN() / binaryNL()',
+        syntax: 'binary(numero) | binaryN(numero, bits)',
+        description:
+          'Convierte un número a su representación binaria y la usa como patrón booleano (1/0) — ideal para struct(). binaryN() fija el número de bits (por defecto 16). Las variantes con "L" devuelven una lista en vez de un patrón secuencial.',
+        examples: [{ label: 'Ritmo a partir de un número', code: '"hh".s().struct(binary(5))\n// equivale a: "hh".s().struct("1 0 1")' }],
+      },
+      {
+        name: '.ceil()',
+        syntax: '.ceil()',
+        description: 'Redondea cada valor numérico del patrón hacia arriba (al entero superior).',
+        examples: [{ label: 'Redondeo hacia arriba', code: 'note("42 42.1 42.5 43".ceil())' }],
+      },
+    ],
+  },
+  {
+    id: 'advanced',
+    title: 'Funciones avanzadas e internas',
+    summary:
+      'Utilidades de bajo nivel para quien quiere ir más allá de lo habitual: modulación entre pistas mediante buses, limpiar variables propias, o medir la duración de eventos en ciclos.',
+    entries: [
+      {
+        name: 'clearScope()',
+        syntax: 'clearScope()',
+        description: 'Borra todas las variables y funciones que hayas definido tú mismo en el código (por ejemplo con let o function) — útil para "reiniciar" ese estado sin recargar la página.',
+        examples: [],
+      },
+      {
+        name: '.bmod()',
+        syntax: '.bmod({ bus: n, control: "parametro" })',
+        description:
+          'Modula un parámetro con la señal enviada por otra capa a través de un "bus" (declarado con .bus(n) en la capa emisora) — permite que una pista module el filtro, el volumen, etc. de otra en tiempo real.',
+        examples: [],
+      },
+      {
+        name: 'cyclesPer',
+        syntax: 'cyclesPer',
+        description:
+          'Señal que, combinada con la estructura de otro patrón (con .struct() o similar), da la duración de cada evento medida en ciclos por evento — el recíproco de per()/perCycle(). Útil para que la duración de una nota influya en otro parámetro, como su tono.',
+        examples: [{ label: 'Notas cortas más agudas', code: 'sound("saw saw [saw saw] saw").note(cyclesPer.range(50, 100))' }],
       },
     ],
   },
