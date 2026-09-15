@@ -40,7 +40,8 @@ export function SavedPatternsPanel({ patterns, onLoadCode, onDelete, onRename }:
                   }
                   if (e.key === 'Escape') setEditingId(null);
                 }}
-                className="flex-1 rounded border border-zinc-700 bg-zinc-900 px-2 py-1 text-sm text-zinc-200 outline-none focus:border-purple-600"
+                aria-label={`Renombrar patrón ${pattern.name}`}
+                className="flex-1 rounded border border-zinc-700 bg-zinc-900 px-2 py-1 text-sm text-zinc-200 outline-none focus:border-purple-600 focus-visible:ring-2 focus-visible:ring-purple-400"
               />
               <button
                 type="button"
@@ -48,7 +49,7 @@ export function SavedPatternsPanel({ patterns, onLoadCode, onDelete, onRename }:
                   onRename(pattern.id, editingName.trim() || pattern.name);
                   setEditingId(null);
                 }}
-                className="text-xs text-purple-400 hover:text-purple-300"
+                className="text-xs text-purple-400 hover:text-purple-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
               >
                 OK
               </button>
@@ -68,9 +69,9 @@ export function SavedPatternsPanel({ patterns, onLoadCode, onDelete, onRename }:
             <button
               type="button"
               onClick={() => onLoadCode(pattern.code)}
-              className="rounded bg-purple-600 px-2 py-1 text-xs font-medium text-white hover:bg-purple-500"
+              className="rounded bg-purple-600 px-2 py-1 text-xs font-medium text-white hover:bg-purple-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
             >
-              ▶ Cargar
+              <span aria-hidden="true">▶</span> Cargar
             </button>
             <button
               type="button"
@@ -78,14 +79,16 @@ export function SavedPatternsPanel({ patterns, onLoadCode, onDelete, onRename }:
                 setEditingId(pattern.id);
                 setEditingName(pattern.name);
               }}
-              className="rounded bg-zinc-800 px-2 py-1 text-xs text-zinc-300 hover:bg-zinc-700"
+              className="rounded bg-zinc-800 px-2 py-1 text-xs text-zinc-300 hover:bg-zinc-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
             >
               Renombrar
             </button>
             <button
               type="button"
-              onClick={() => onDelete(pattern.id)}
-              className="rounded bg-zinc-800 px-2 py-1 text-xs text-red-400 hover:bg-red-950"
+              onClick={() => {
+                if (confirm(`¿Eliminar "${pattern.name}"? No se puede deshacer.`)) onDelete(pattern.id);
+              }}
+              className="rounded bg-zinc-800 px-2 py-1 text-xs text-red-400 hover:bg-red-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
             >
               Eliminar
             </button>

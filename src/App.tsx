@@ -28,13 +28,15 @@ function App() {
           <h1 className="text-lg font-semibold text-zinc-100">Strudel Learning App</h1>
           <p className="text-xs text-zinc-500">Live coding musical — strudel.cc</p>
         </div>
-        <div className="flex gap-1.5">
+        <div role="tablist" aria-label="Secciones" className="flex gap-1.5">
           {tabs.map((t) => (
             <button
               key={t.id}
               type="button"
+              role="tab"
+              aria-selected={tab === t.id}
               onClick={() => setTab(t.id)}
-              className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium ${
+              className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 ${
                 tab === t.id ? 'bg-purple-600 text-white' : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
               }`}
             >
@@ -42,7 +44,7 @@ function App() {
             </button>
           ))}
         </div>
-        <div className="lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pr-1">
+        <div role="tabpanel" className="lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pr-1">
           {tab === 'lessons' && <LessonPanel onLoadCode={loadCode} />}
           {tab === 'reference' && <ReferencePanel onLoadCode={loadCode} />}
           {tab === 'saved' && (

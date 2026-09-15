@@ -84,23 +84,24 @@ export const Playground = forwardRef<PlaygroundHandle, PlaygroundProps>(function
         <button
           type="button"
           onClick={() => editorRef.current?.evaluate()}
-          className="rounded-md bg-purple-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-purple-500"
+          className="rounded-md bg-purple-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-purple-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
         >
-          ▶ Play
+          <span aria-hidden="true">▶</span> Play
         </button>
         <button
           type="button"
           onClick={() => editorRef.current?.stop()}
-          className="rounded-md bg-zinc-700 px-4 py-1.5 text-sm font-medium text-white hover:bg-zinc-600"
+          className="rounded-md bg-zinc-700 px-4 py-1.5 text-sm font-medium text-white hover:bg-zinc-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
         >
-          ■ Stop
+          <span aria-hidden="true">■</span> Stop
         </button>
         <button
           type="button"
           onClick={() => setIsNaming((v) => !v)}
-          className="rounded-md bg-zinc-700 px-4 py-1.5 text-sm font-medium text-white hover:bg-zinc-600"
+          aria-expanded={isNaming}
+          className="rounded-md bg-zinc-700 px-4 py-1.5 text-sm font-medium text-white hover:bg-zinc-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
         >
-          💾 Guardar
+          <span aria-hidden="true">💾</span> Guardar
         </button>
         <span className="text-xs text-zinc-400">
           {isPlaying ? '● reproduciendo' : '○ detenido'} — Ctrl/Alt+Enter para evaluar, Ctrl/Alt+. para parar
@@ -116,21 +117,26 @@ export const Playground = forwardRef<PlaygroundHandle, PlaygroundProps>(function
             type="text"
             value={patternName}
             onChange={(e) => setPatternName(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && confirmSave()}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') confirmSave();
+              if (e.key === 'Escape') setIsNaming(false);
+            }}
+            onFocus={(e) => e.target.select()}
             placeholder="Nombre del patrón..."
-            className="flex-1 rounded-md border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-sm text-zinc-200 outline-none focus:border-purple-600"
+            aria-label="Nombre del patrón a guardar"
+            className="flex-1 rounded-md border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-sm text-zinc-200 outline-none focus:border-purple-600 focus-visible:ring-2 focus-visible:ring-purple-400"
           />
           <button
             type="button"
             onClick={confirmSave}
-            className="rounded-md bg-purple-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-purple-500"
+            className="rounded-md bg-purple-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-purple-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
           >
             Guardar
           </button>
           <button
             type="button"
             onClick={() => setIsNaming(false)}
-            className="rounded-md bg-zinc-800 px-3 py-1.5 text-sm text-zinc-400 hover:bg-zinc-700"
+            className="rounded-md bg-zinc-800 px-3 py-1.5 text-sm text-zinc-400 hover:bg-zinc-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
           >
             Cancelar
           </button>

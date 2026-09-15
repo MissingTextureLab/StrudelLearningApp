@@ -12,16 +12,18 @@ export function LessonPanel({ onLoadCode }: LessonPanelProps) {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap gap-1.5">
+      <div role="tablist" aria-label="Lecciones" className="flex flex-wrap gap-1.5">
         {lessons.map((l) => (
           <button
             key={l.id}
             type="button"
+            role="tab"
+            aria-selected={l.id === activeId}
             onClick={() => {
               setActiveId(l.id);
               setOpenHints({});
             }}
-            className={`rounded-md px-2.5 py-1 text-xs font-medium ${
+            className={`rounded-md px-2.5 py-1 text-xs font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 ${
               l.id === activeId ? 'bg-purple-600 text-white' : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
             }`}
           >
@@ -46,9 +48,9 @@ export function LessonPanel({ onLoadCode }: LessonPanelProps) {
               key={example.label}
               type="button"
               onClick={() => onLoadCode(example.code)}
-              className="group flex items-center gap-2 rounded border border-zinc-800 bg-zinc-900 px-2 py-1.5 text-left hover:border-purple-700"
+              className="group flex items-center gap-2 rounded border border-zinc-800 bg-zinc-900 px-2 py-1.5 text-left hover:border-purple-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
             >
-              <span className="text-purple-400 group-hover:text-purple-300">▶</span>
+              <span aria-hidden="true" className="text-purple-400 group-hover:text-purple-300">▶</span>
               <span className="flex-1 truncate font-mono text-xs text-zinc-300">{example.code.split('\n')[0]}</span>
               <span className="shrink-0 text-[10px] text-zinc-600">{example.label}</span>
             </button>
@@ -67,7 +69,7 @@ export function LessonPanel({ onLoadCode }: LessonPanelProps) {
                   <button
                     type="button"
                     onClick={() => onLoadCode(exercise.starterCode!)}
-                    className="rounded bg-zinc-800 px-2 py-1 text-xs text-zinc-300 hover:bg-zinc-700"
+                    className="rounded bg-zinc-800 px-2 py-1 text-xs text-zinc-300 hover:bg-zinc-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
                   >
                     Cargar punto de partida
                   </button>
@@ -75,8 +77,9 @@ export function LessonPanel({ onLoadCode }: LessonPanelProps) {
                 {exercise.hint && (
                   <button
                     type="button"
+                    aria-expanded={!!openHints[i]}
                     onClick={() => setOpenHints((prev) => ({ ...prev, [i]: !prev[i] }))}
-                    className="rounded bg-zinc-800 px-2 py-1 text-xs text-zinc-300 hover:bg-zinc-700"
+                    className="rounded bg-zinc-800 px-2 py-1 text-xs text-zinc-300 hover:bg-zinc-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
                   >
                     {openHints[i] ? 'Ocultar pista' : 'Ver pista'}
                   </button>
