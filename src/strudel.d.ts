@@ -6,3 +6,6 @@ declare module '@strudel/transpiler';
 declare module '@strudel/codemirror';
 declare module '@strudel/draw';
 declare module '@strudel/soundfonts';
+declare module '@strudel/midi';
+declare module '@strudel/osc';
+declare module '@strudel/hydra';

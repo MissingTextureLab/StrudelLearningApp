@@ -24,7 +24,15 @@ export function prebake(): Promise<void> {
     initAudioOnFirstClick();
     miniAllStrings();
     prebaked = Promise.all([
-      evalScope(import('@strudel/core'), import('@strudel/mini'), import('@strudel/tonal'), import('@strudel/webaudio')),
+      evalScope(
+        import('@strudel/core'),
+        import('@strudel/mini'),
+        import('@strudel/tonal'),
+        import('@strudel/webaudio'),
+        import('@strudel/midi'),
+        import('@strudel/osc'),
+        import('@strudel/hydra'),
+      ),
       registerSynthSounds(),
       registerZZFXSounds(),
       import('@strudel/soundfonts').then(({ registerSoundfonts }) => registerSoundfonts()),

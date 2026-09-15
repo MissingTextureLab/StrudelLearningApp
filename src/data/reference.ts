@@ -532,4 +532,48 @@ export const referenceCategories: ReferenceCategory[] = [
       },
     ],
   },
+  {
+    id: 'external',
+    title: 'MIDI, OSC e Hydra (control y visuales externos)',
+    summary:
+      'Cómo sacar el patrón de Strudel hacia fuera del navegador: MIDI (dispositivos/software vía Web MIDI), OSC (TouchDesigner, SuperCollider...) e Hydra (visuales de live coding integrados en el propio editor).',
+    entries: [
+      {
+        name: '.midi()',
+        syntax: '.midi("nombre-del-puerto")',
+        description:
+          'Envía el patrón como notas MIDI reales usando la Web MIDI API del navegador — funciona con puertos MIDI virtuales (IAC en Mac, loopMIDI en Windows) que luego puede leer TouchDesigner (MIDI In CHOP), Ableton, etc. Sin argumento usa el primer puerto disponible.',
+        examples: [
+          { label: 'Enviar notas por MIDI', code: 'note("c a f e").midi()' },
+          { label: 'A un puerto concreto', code: 'note("c a f e").midi("loopMIDI Port")' },
+        ],
+      },
+      {
+        name: 'midin() — recibir MIDI',
+        syntax: 'const cc = await midin("nombre-de-entrada")',
+        description: 'Recibe mensajes de control (CC) de un dispositivo o software MIDI externo y los convierte en una señal utilizable con .range() — control en tiempo real desde fuera del navegador.',
+        examples: [{ label: 'Filtro controlado por CC0', code: 'const cc = await midin()\nnote("c a f e").lpf(cc(0).range(200,4000))' }],
+      },
+      {
+        name: '.osc()',
+        syntax: '.osc()',
+        description:
+          'Envía cada evento del patrón como un mensaje OSC por UDP — pensado para TouchDesigner, SuperCollider/SuperDirt, o cualquier software que escuche OSC. Requiere un puente local (el navegador no puede mandar UDP directamente): ejecuta `npx @strudel/osc` en una terminal — abre un WebSocket en localhost:8080 y reenvía por OSC a 127.0.0.1:57120 por defecto. En TouchDesigner, pon un OSC In CHOP escuchando en el puerto 57120 (o el que configures en el puente) y ya te llegan los valores de cada evento (note, s, gain...) como canales.',
+        examples: [{ label: 'Enviar patrón por OSC', code: 'note("c e g").osc()' }],
+      },
+      {
+        name: 'initHydra() / H()',
+        syntax: 'await initHydra()',
+        description:
+          'Activa Hydra (el live-coder de visuales) dentro del propio editor de Strudel — tras llamarlo, todas las funciones de Hydra (osc(), shape(), .out(), etc.) están disponibles en el mismo código, mezcladas con tu música. H(patrón) deja usar un patrón de Strudel como entrada numérica para Hydra, sincronizando visual y sonido automáticamente. detectAudio:true hace los visuales reactivos al audio.',
+        examples: [
+          { label: 'Visual básico', code: 'await initHydra()\nosc(10,0.9,300).color(0.9,0.7,0.8).out()' },
+          {
+            label: 'Patrón controlando forma y sonido a la vez',
+            code: 'await initHydra()\nlet pat = "3 4 5 [6 7]*2"\nshape(H(pat)).out(o0)\nn(pat).scale("A:minor").s("piano").room(1)',
+          },
+        ],
+      },
+    ],
+  },
 ];
