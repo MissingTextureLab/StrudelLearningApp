@@ -3,8 +3,10 @@ import { transpiler } from '@strudel/transpiler';
 import { webaudioOutput } from '@strudel/webaudio';
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { getAudioContext, prebake } from '../lib/strudel-setup';
+import { savePattern } from '../lib/storage';
 
 interface StrudelMirrorInstance {
+  code: string;
   evaluate: () => void;
   stop: () => void;
   setCode: (code: string) => void;
@@ -18,11 +20,17 @@ export interface PlaygroundHandle {
   loadCode: (code: string, autoplay?: boolean) => void;
 }
 
-export const Playground = forwardRef<PlaygroundHandle>(function Playground(_props, ref) {
+interface PlaygroundProps {
+  onPatternSaved?: () => void;
+}
+
+export const Playground = forwardRef<PlaygroundHandle, PlaygroundProps>(function Playground({ onPatternSaved }, ref) {
   const containerRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<StrudelMirrorInstance | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isNaming, setIsNaming] = useState(false);
+  const [patternName, setPatternName] = useState('');
 
   useImperativeHandle(ref, () => ({
     loadCode: (code: string, autoplay = true) => {
@@ -32,6 +40,15 @@ export const Playground = forwardRef<PlaygroundHandle>(function Playground(_prop
       if (autoplay) editor.evaluate();
     },
   }));
+
+  const confirmSave = () => {
+    const code = editorRef.current?.code ?? '';
+    const name = patternName.trim() || `Patrón ${new Date().toLocaleString('es-ES')}`;
+    savePattern(name, code);
+    setIsNaming(false);
+    setPatternName('');
+    onPatternSaved?.();
+  };
 
   useEffect(() => {
     const container = containerRef.current;
@@ -76,10 +93,44 @@ export const Playground = forwardRef<PlaygroundHandle>(function Playground(_prop
         >
           ■ Stop
         </button>
+        <button
+          type="button"
+          onClick={() => setIsNaming((v) => !v)}
+          className="rounded-md bg-zinc-700 px-4 py-1.5 text-sm font-medium text-white hover:bg-zinc-600"
+        >
+          💾 Guardar
+        </button>
         <span className="text-xs text-zinc-400">
           {isPlaying ? '● reproduciendo' : '○ detenido'} — Ctrl/Alt+Enter para evaluar, Ctrl/Alt+. para parar
         </span>
       </div>
+      {isNaming && (
+        <div className="flex items-center gap-2">
+          <input
+            autoFocus
+            type="text"
+            value={patternName}
+            onChange={(e) => setPatternName(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && confirmSave()}
+            placeholder="Nombre del patrón..."
+            className="flex-1 rounded-md border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-sm text-zinc-200 outline-none focus:border-purple-600"
+          />
+          <button
+            type="button"
+            onClick={confirmSave}
+            className="rounded-md bg-purple-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-purple-500"
+          >
+            Guardar
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsNaming(false)}
+            className="rounded-md bg-zinc-800 px-3 py-1.5 text-sm text-zinc-400 hover:bg-zinc-700"
+          >
+            Cancelar
+          </button>
+        </div>
+      )}
       <div ref={containerRef} className="overflow-hidden rounded-lg border border-zinc-700" />
       {error && (
         <div className="rounded-md border border-red-800 bg-red-950/50 px-3 py-2 text-sm text-red-300">{error}</div>
