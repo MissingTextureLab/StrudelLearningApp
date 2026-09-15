@@ -581,7 +581,7 @@ export const referenceCategories: ReferenceCategory[] = [
       {
         name: '.tremolo() / .tremolosync()',
         syntax: '.tremolo(hz) / .tremolosync(ciclos)',
-        description: 'Modula el volumen con un oscilador continuo (trémolo). tremolo() fija la velocidad en Hz; tremolosync() la sincroniza a un número de ciclos. .tremoloskew() deforma la onda de modulación.',
+        description: 'Modula el volumen con un oscilador continuo (trémolo). tremolo() fija la velocidad en Hz; tremolosync() la sincroniza a un número de ciclos. .tremolodepth() controla la intensidad, .tremoloshape() la forma de la onda (tri/square/sine/saw/ramp), .tremolophase() su desfase, y .tremoloskew() deforma esa onda.',
         examples: [{ label: 'Trémolo sincronizado', code: 'note("d d d# d".fast(4)).s("supersaw").tremolosync("4").tremoloskew("<1 .5 0>")' }],
       },
       {
@@ -649,6 +649,12 @@ export const referenceCategories: ReferenceCategory[] = [
         examples: [{ label: 'De staccato a legato', code: 'note("c a f e").s("piano").clip("<.5 1 2>")' }],
       },
       {
+        name: '.duration() / .dur()',
+        syntax: '.duration(ciclos)',
+        description: 'Fija la duración del evento en ciclos (un valor absoluto), y también recorta el sample si se pasa de esa duración — parecido a .clip(), que en cambio multiplica la duración existente por un factor relativo.',
+        examples: [],
+      },
+      {
         name: '.cut()',
         syntax: '.cut(grupo)',
         description:
@@ -687,9 +693,9 @@ export const referenceCategories: ReferenceCategory[] = [
         examples: [],
       },
       {
-        name: '.hpattack() .hpdecay() .hpsustain() .hprelease()',
-        syntax: '.hpattack(t).hpdecay(t).hpsustain(nivel).hprelease(t)',
-        description: 'Envolvente ADSR aplicada a la frecuencia de corte del filtro paso-alto (.hpf()) — igual que la envolvente equivalente para paso-bajo y paso-banda.',
+        name: '.hpattack() .hpdecay() .hpsustain() .hprelease() / .hpenv()',
+        syntax: '.hpattack(t).hpdecay(t).hpsustain(nivel).hprelease(t).hpenv(semitonos)',
+        description: 'Envolvente ADSR aplicada a la frecuencia de corte del filtro paso-alto (.hpf()) — igual que la envolvente equivalente para paso-bajo y paso-banda. .hpenv() fija su profundidad.',
         examples: [],
       },
       {
@@ -823,6 +829,12 @@ export const referenceCategories: ReferenceCategory[] = [
         examples: [{ label: 'Estéreo con reverso a la derecha', code: 's("bd lt [~ ht] mt cp ~ bd hh").jux(rev)' }],
       },
       {
+        name: '.juxBy() / .juxFlip() / .juxFlipBy()',
+        syntax: '.juxBy(anchura, fn)',
+        description: 'Variantes de .jux(): juxBy() permite elegir la anchura estéreo (0 = mono, 1 = estéreo completo); juxFlip() intercambia de canal cada ciclo (a veces la copia transformada suena a la izquierda, a veces a la derecha); juxFlipBy() combina ambas cosas.',
+        examples: [{ label: 'Anchura estéreo variable', code: 's("bd lt [~ ht] mt cp ~ bd hh").juxBy("<0 .5 1>/2", rev)' }],
+      },
+      {
         name: 'stack()',
         syntax: 'stack(patrón1, patrón2, ...)',
         description: 'Toca varios patrones a la vez, todos con la misma duración de ciclo. Equivalente funcional a las capas con $:.',
@@ -844,15 +856,21 @@ export const referenceCategories: ReferenceCategory[] = [
         examples: [{ label: 'Eco con quinta añadida', code: 'note("c e g").off(1/8, x=>x.add(7))' }],
       },
       {
+        name: '.early() / .late()',
+        syntax: '.early(ciclos) / .late(ciclos)',
+        description: 'Adelantan o retrasan el patrón entero en el tiempo, por la fracción de ciclo indicada — a diferencia de .off(), no crean una copia, solo desplazan el original.',
+        examples: [{ label: 'Un hi-hat ligeramente retrasado', code: '"bd ~".stack("hh ~".late(.1)).s()' }],
+      },
+      {
         name: '.struct()',
         syntax: '.struct("x ~ x ~")',
         description: 'Aplica una estructura rítmica externa (patrón booleano de x/~) a los valores del patrón.',
         examples: [{ label: 'Ritmo gateado', code: 'note("c,eb,g").struct("x ~ x ~ ~ x ~ x")' }],
       },
       {
-        name: '.iter()',
+        name: '.iter() / .iterBack()',
         syntax: '.iter(n)',
-        description: 'Divide el patrón en n subdivisiones y las va desplazando una posición en cada ciclo sucesivo.',
+        description: 'Divide el patrón en n subdivisiones y las va desplazando una posición en cada ciclo sucesivo. .iterBack() hace lo mismo pero desplazándose en sentido contrario.',
         examples: [{ label: 'Rotación progresiva', code: 'note("0 1 2 3".scale("A:minor")).iter(4)' }],
       },
       {
@@ -1156,7 +1174,7 @@ export const referenceCategories: ReferenceCategory[] = [
       {
         name: 'rand / perlin',
         syntax: 'rand | perlin',
-        description: 'rand da números aleatorios continuos entre 0 y 1 en cada instante; perlin da ruido Perlin (aleatorio pero suave, sin saltos bruscos) — mejor para modulación orgánica.',
+        description: 'rand da números aleatorios continuos entre 0 y 1 en cada instante; perlin da ruido Perlin (aleatorio pero suave, sin saltos bruscos) — mejor para modulación orgánica. rand2 es la variante bipolar de rand (-1 a 1), como los demás generadores con sufijo 2.',
         examples: [
           { label: 'Filtro con ruido aleatorio', code: 's("bd*4,hh*8").cutoff(rand.range(500,8000))' },
           { label: 'Filtro con Perlin (más suave)', code: 's("bd*4,hh*8").cutoff(perlin.range(500,8000))' },
@@ -1227,7 +1245,7 @@ export const referenceCategories: ReferenceCategory[] = [
       {
         name: '.sometimes() / .sometimesBy()',
         syntax: '.sometimesBy(0-1, fn)',
-        description: 'Aplica una función a una fracción aleatoria de los eventos. sometimes() equivale a sometimesBy(0.5, fn). También existen often/rarely/almostAlways/almostNever como atajos con distinta probabilidad.',
+        description: 'Aplica una función a una fracción aleatoria de los eventos. sometimes() equivale a sometimesBy(0.5, fn). También existen atajos con distinta probabilidad: .often() (0.75), .rarely() (0.25), .almostAlways() (0.9), .almostNever() (0.1), .always() (1, siempre) y .never() (0, nunca).',
         examples: [{ label: 'A veces más lento', code: 's("hh*8").sometimesBy(.4, x=>x.speed("0.5"))' }],
       },
       {
@@ -1366,6 +1384,12 @@ export const referenceCategories: ReferenceCategory[] = [
         syntax: '._spectrum()',
         description: 'Analizador de espectro: muestra el contenido en frecuencias del audio en tiempo real.',
         examples: [{ label: 'Espectro de una melodía', code: 'n("<0 4 2 1>*3").scale("d3:minor:pentatonic").s("sine")._spectrum()' }],
+      },
+      {
+        name: '._fscope()',
+        syntax: '._fscope()',
+        description: 'Osciloscopio en el dominio de la frecuencia — combina la forma de ._scope() (línea que se dibuja en el propio código) con el contenido de ._spectrum().',
+        examples: [{ label: 'Espectro en línea', code: 's("sawtooth")._fscope()' }],
       },
       {
         name: '.color() / .colour()',
@@ -1922,6 +1946,12 @@ export const referenceCategories: ReferenceCategory[] = [
         syntax: '.withValue(v => nuevoValor)',
         description: 'Aplica una función de JavaScript directamente al valor de cada evento del patrón, devolviendo un patrón nuevo — la forma más genérica de transformar los datos de un patrón cuando ningún método existente hace exactamente lo que necesitas.',
         examples: [{ label: 'Sumar 10 a cada valor', code: '"0 1 2".withValue(v => v + 10).log()' }],
+      },
+      {
+        name: '.source()',
+        syntax: '.source(() => nodoWebAudio)',
+        description: 'Define un nodo de Web Audio propio (creado a mano con la API nativa del navegador) como fuente de sonido, para usarlo como si fuera un synth más de Strudel — la puerta de entrada para integrar audio generado fuera de Strudel.',
+        examples: [],
       },
     ],
   },
