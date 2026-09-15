@@ -204,10 +204,16 @@ export const referenceCategories: ReferenceCategory[] = [
         examples: [{ label: 'Barrido de posición', code: 's("squelch").bank("wt_digital").seg(8).note("F1").wt("0 0.25 0.5 0.75 1")' }],
       },
       {
-        name: '.wtattack() .wtdecay() .wtdc()',
-        syntax: '.wtattack(t).wtdecay(t).wtdc(0-1)',
-        description: 'Parte de la envolvente y el LFO que modulan la posición dentro de la wavetable: wtattack/wtdecay son tiempos de la envolvente (junto a wtsustain/wtrelease/wtenv), y wtdc es el desplazamiento (DC offset) del LFO que la modula (junto a wtrate/wtdepth/wtshape/wtskew/wtsync).',
+        name: '.wtattack() .wtdecay() .wtsustain() .wtrelease() / .wtenv()',
+        syntax: '.wtattack(t).wtdecay(t).wtsustain(nivel).wtrelease(t)',
+        description: 'Envolvente ADSR que modula la posición dentro de la wavetable — mismo patrón que las demás envolventes de Strudel, aplicada a .wt() en vez de al volumen o al filtro. .wtenv() fija la profundidad de esa envolvente.',
         examples: [],
+      },
+      {
+        name: '.wtrate() .wtdepth() .wtshape() .wtskew() .wtsync() .wtdc() .wtphaserand()',
+        syntax: '.wtrate(hz)',
+        description: 'LFO que modula la posición dentro de la wavetable: mismos parámetros que los demás LFO de Strudel (velocidad, sincronía a ciclos, profundidad, forma e inclinación). wtphaserand() añade aleatoriedad a la fase inicial del oscilador, independiente del LFO.',
+        examples: [{ label: 'Fase inicial aleatoria', code: 's("basique").bank("wt_digital").seg(16).wtphaserand("<0 1>")' }],
       },
       {
         name: '.phases()',
@@ -388,6 +394,15 @@ export const referenceCategories: ReferenceCategory[] = [
         syntax: '.withBase(nuevaBase)',
         description: 'Cambia la frecuencia base (por defecto 220Hz) de un patrón de frecuencias afinado con xen() u otras herramientas microtonales, sin tener que recalcular las razones.',
         examples: [],
+      },
+      {
+        name: 'xen()',
+        syntax: 'xen("nombreDeEscala" | "nEdo" | [ratios])',
+        description: 'La herramienta principal de afinación xenharmónica de Strudel: toma un patrón de grados (en el control i()) y una escala — puede ser un nombre de escala conocido, una notación "nEdo" (n divisiones iguales de la octava, ej. "31edo"), o una lista de razones de frecuencia — y devuelve las frecuencias resultantes sobre una base de 220Hz. Es la base sobre la que funcionan .tune() y .ftranspose().',
+        examples: [
+          { label: 'Tríada menor en 31 EDO', code: 'i("0 8 18").xen("31edo").piano()' },
+          { label: 'Cambiando de afinación por ciclo', code: 'i("0 1 2 3 4 5 6 7").xen("<5edo 10edo 15edo hexany15>")' },
+        ],
       },
     ],
   },
@@ -1116,6 +1131,12 @@ export const referenceCategories: ReferenceCategory[] = [
         description: 'Aplica una función solo a la parte del ciclo comprendida entre inicio y fin (ambos entre 0 y 1), dejando el resto del patrón sin tocar.',
         examples: [{ label: 'Invertir solo la segunda mitad', code: 'note("c d e f g a b c5").within(0.5, 1, rev)' }],
       },
+      {
+        name: '.zoom()',
+        syntax: '.zoom(inicio, fin)',
+        description: 'Toca solo la parte del patrón comprendida entre inicio y fin (0 a 1), pero estirándola para que ocupe la duración completa del ciclo original — a diferencia de .compress()/.focus(), que dejan la parte elegida en su sitio original dentro del ciclo.',
+        examples: [{ label: 'Ampliar un fragmento del patrón', code: 's("bd*2 hh*3 [sd bd]*2 perc").zoom(0.25, 0.75)' }],
+      },
     ],
   },
   {
@@ -1510,6 +1531,12 @@ export const referenceCategories: ReferenceCategory[] = [
         syntax: '.tour(p1, p2, ...)',
         description: 'Inserta el patrón original en una lista de patrones: la primera vez se coloca al final, y en repeticiones sucesivas se va moviendo hacia atrás en la lista — todo dentro de un único ciclo repartido en pasos, por lo que conviene fijar el número de pasos con .pace().',
         examples: [{ label: 'Recorrido por variaciones', code: '"[c g]".tour("e f", "e f g", "g f e c").note().sound("folkharp").pace(8)' }],
+      },
+      {
+        name: 'zip()',
+        syntax: 'zip(p1, p2, ...)',
+        description: 'Entrelaza los pasos de varios patrones en uno solo, repartido en un único ciclo denso — conviene fijar el número de pasos por ciclo con .pace().',
+        examples: [{ label: 'Melodía entrelazada de tres frases', code: 'zip("e f", "e f g", "g [f e] a f4 c").note().sound("folkharp").pace(8)' }],
       },
     ],
   },
