@@ -87,6 +87,44 @@ export const referenceCategories: ReferenceCategory[] = [
           'Bytebeat es una técnica de síntesis que genera audio a partir de fórmulas matemáticas a nivel de bit sobre un contador de tiempo (t). byteBeatExpression() (alias bbexpr/bb) define esa fórmula; byteBeatStartTime() (alias bbst) fija el valor inicial de t, en muestras.',
         examples: [{ label: 'Expresión bytebeat propia', code: 's("bytebeat").bbexpr(\'t*(t>>15^t>>66)\')' }],
       },
+      {
+        name: '.density() (ruido crackle)',
+        syntax: '.density(cantidad)',
+        description: 'Controla la densidad del ruido "crackle" (chisporroteo tipo vinilo) generado por s("crackle") — no confundir con el alias antiguo "density" de .fast().',
+        examples: [{ label: 'Crackle con densidad variable', code: 's("crackle*4").density("<0.01 0.04 0.2 0.5>".slow(4))' }],
+      },
+      {
+        name: '.detune()',
+        syntax: '.detune(cantidad)',
+        description: 'Desafina entre sí las voces apiladas de osciladores que soportan varias voces (como supersaw), ensanchando el sonido.',
+        examples: [{ label: 'Supersaw más o menos desafinado', code: 'note("d f a a# a d3").fast(2).s("supersaw").detune("<.1 .2 .5 24.1>")' }],
+      },
+      {
+        name: '.fit()',
+        syntax: '.fit()',
+        description: 'Ajusta el sample para que dure exactamente lo que dura su evento — ideal para loops rítmicos como breaks de batería. Parecido a .loopAt().',
+        examples: [{ label: 'Ajustar un sample a la duración del evento', code: 's("break/2").fit()' }],
+      },
+      {
+        name: 'getDur()',
+        syntax: "await getDur('nombreDeSample')",
+        description: 'Devuelve (de forma asíncrona, requiere await) la duración en segundos de un sample — útil para ajustar el tempo del patrón exactamente a la duración de un loop.',
+        examples: [{ label: 'Ajustar cps a la duración de un sample', code: "let k = await getDur('break')\ns(\"break\").cps(1/k)" }],
+      },
+      {
+        name: '.fmi() / .fm() .fmh() .fmwave()',
+        syntax: '.fm(indice).fmh(ratio)',
+        description:
+          'Controles de síntesis FM (modulación en frecuencia): .fmi()/.fm() es la profundidad (índice) de modulación, .fmh() la relación armónica entre el oscilador modulador y el portador, y .fmwave() la forma de onda del modulador.',
+        examples: [{ label: 'FM con ratio armónico', code: 'n("0 1 2 3".fast(4)).scale("d:minor").s("sine").fmwave("<sine square sawtooth crackle>").fm(4).fmh(2.01)' }],
+      },
+      {
+        name: '.fmattack() .fmdecay() .fmsustain() .fmrelease() / .fmenv()',
+        syntax: '.fmattack(t).fmdecay(t).fmsustain(nivel).fmrelease(t)',
+        description:
+          'Envolvente ADSR aplicada a la profundidad de la modulación FM, para que el brillo del timbre cambie con el tiempo en vez de quedarse fijo. .fmenv() elige la forma de la rampa ("lin" o "exp").',
+        examples: [{ label: 'Timbre FM que se apaga', code: 'note("c e g b g e").fm(4).fmdecay(.2).fmsustain(0).fmenv("<exp lin>")' }],
+      },
     ],
   },
   {
@@ -169,6 +207,38 @@ export const referenceCategories: ReferenceCategory[] = [
           { label: 'Arpegio sobre acordes cambiantes', code: 'note("<[c,eb,g]!2 [c,f,ab] [d,f,ab]>").arp("0 [0,2] 1 [0,2]")' },
         ],
       },
+      {
+        name: '.dictionary() / .dict()',
+        syntax: '.dictionary("nombre")',
+        description: 'Elige qué diccionario de voicings usa .voicing() — por defecto el incluido en Strudel, o uno registrado antes con addVoicings().',
+        examples: [
+          {
+            label: 'Usar un diccionario propio',
+            code: "addVoicings('house', {\n  '': ['7 12 16', '0 7 16', '4 7 12'],\n  m: ['0 3 7'],\n})\nchord(\"<Am C D F>\").dict('house').anchor(66).voicing().room(.5)",
+          },
+        ],
+      },
+      {
+        name: 'i()',
+        syntax: 'i("grados")',
+        description:
+          'Selecciona un grado dentro de una escala xenharmónica (afinaciones no estándar), para usar junto con xen() o tune(). Es el equivalente de n() pero para escalas EDO/xen en vez de las escalas occidentales habituales.',
+        examples: [{ label: 'Grados de una escala EDO', code: 'i("0 1 2 3 4 5 6 7").xen("<5edo 10edo 15edo>")' }],
+      },
+      {
+        name: '.ftranspose()',
+        syntax: '.ftranspose(pasos)',
+        description:
+          'Transpone en frecuencia (no en semitonos) por un número de pasos de una afinación EDO (por defecto 12, o la que se haya fijado con xen()) — pensado para trabajar con freq() o escalas microtonales.',
+        examples: [],
+      },
+      {
+        name: 'edoScale()',
+        syntax: 'edoScale("Tónica:LLsLLLs:pasoGrande:pasoPequeño")',
+        description:
+          'Convierte números en notas de una escala EDO (división equitativa de la octava) definida a mano: una secuencia de pasos "grandes" (L) y "pequeños" (s), y el tamaño de cada uno. Herramienta avanzada de afinación microtonal.',
+        examples: [{ label: 'Escala mayor como EDO de 12 pasos', code: 'n("0 2 4 6 4 2").edoScale("C:LLsLLLs:2:1")' }],
+      },
     ],
   },
   {
@@ -243,10 +313,21 @@ export const referenceCategories: ReferenceCategory[] = [
         name: 'Ritmos euclidianos',
         syntax: '"bd(golpes,pasos,rotación)"',
         description:
-          'Reparte un número de golpes de la forma más uniforme posible a lo largo de un número de pasos, usando el algoritmo euclidiano — la base matemática de muchos ritmos tradicionales del mundo. La rotación (opcional) desplaza el punto de partida.',
+          'Reparte un número de golpes de la forma más uniforme posible a lo largo de un número de pasos, usando el algoritmo euclidiano — la base matemática de muchos ritmos tradicionales del mundo. La rotación (opcional) desplaza el punto de partida. También existe como función encadenable: .euclid(pulsos, pasos) y .euclidRot(pulsos, pasos, rotación).',
         examples: [
           { label: '3 golpes en 8 pasos', code: 's("bd(3,8)")' },
           { label: 'Con rotación', code: 's("bd(3,8,3)")' },
+        ],
+      },
+      {
+        name: '.euclidish() .euclidLegato() .euclidLegatoRot() .euclidRot()',
+        syntax: '.euclidish(p,s,mezcla) / .euclidLegato(p,s) / .euclidRot(p,s,rotación)',
+        description:
+          'Variantes de euclid(): euclidish() mezcla gradualmente entre el ritmo euclidiano (0) y un patrón "parejo" con todos los pasos iguales (1); euclidLegato() sostiene cada pulso hasta el siguiente, sin huecos; euclidRot() (y euclidLegatoRot()) añaden además un desplazamiento rotacional del patrón resultante.',
+        examples: [
+          { label: 'Groove entre euclidiano y parejo', code: 'sound("hh").euclidish(7,12,sine.slow(8)).pan(sine.slow(8))' },
+          { label: 'Euclidiano sin huecos', code: 'note("c3").euclidLegato(3,8)' },
+          { label: 'Ritmo de samba rotado', code: 'note("c3").euclidRot(3,16,14)' },
         ],
       },
     ],
@@ -268,7 +349,7 @@ export const referenceCategories: ReferenceCategory[] = [
       {
         name: '.resonance() / .lpq()',
         syntax: '.lpq(cantidad)',
-        description: 'Resonancia (q) del filtro paso-bajo: realza la zona justo en el punto de corte. Rango típico 0-30.',
+        description: 'Resonancia (q) del filtro paso-bajo: realza la zona justo en el punto de corte. Rango típico 0-30. El filtro paso-alto tiene su propio equivalente: .hpq() (alias hresonance).',
         examples: [{ label: 'Filtro resonante', code: 's("bd sd, hh*8").lpf(2000).lpq("<0 10 20 30>")' }],
       },
       {
@@ -386,7 +467,7 @@ export const referenceCategories: ReferenceCategory[] = [
         name: '.distorttype()',
         syntax: '.distorttype("asym" | "chebyshev" | "cubic" | ...)',
         description:
-          'Elige el algoritmo de waveshaping usado por .distort(). Cada tipo tiene un carácter distinto: asym es distorsión de diodo asimétrica, chebyshev usa polinomios de Chebyshev, cubic es una curva cúbica simple.',
+          'Elige el algoritmo de waveshaping usado por .distort(). Cada tipo tiene un carácter distinto: asym es distorsión de diodo asimétrica, chebyshev usa polinomios de Chebyshev, cubic es una curva cúbica simple, diode emula un diodo, fold es wavefolding, hard es recorte duro (hard-clipping), y también existen scurve y sinefold.',
         examples: [{ label: 'Comparar tipos de distorsión', code: 's("bd sd, hh*8").distort(4).distorttype("<asym chebyshev cubic>")' }],
       },
       {
@@ -408,6 +489,69 @@ export const referenceCategories: ReferenceCategory[] = [
         description:
           'Como en las cajas de ritmos clásicas: al asignar el mismo número de "cutgroup" a varios sonidos, uno corta al anterior en cuanto empieza — típico para simular un hi-hat abierto interrumpido por uno cerrado.',
         examples: [{ label: 'Hi-hats que se cortan entre sí', code: 's("[oh hh]*4").cut(1)' }],
+      },
+      {
+        name: 'FX()',
+        syntax: '.FX(efecto1, efecto2, ...)',
+        description:
+          'Encadena varios efectos como una cadena (chain) explícita, en vez de ir llamando a cada método por separado — el orden dentro de FX() es el orden en que se procesan. Se puede llamar varias veces seguidas (.FX(a).FX(b)) o de una vez (.FX(a, b)).',
+        examples: [{ label: 'Cadena de efectos', code: 's("bd sd, hh*4").FX(\n  phaser(0.5).gain(2),\n  bpf(800),\n  distort(1.3),\n  room(0.2),\n)' }],
+      },
+      {
+        name: '.drive()',
+        syntax: '.drive(cantidad)',
+        description: 'Overdrive del filtro, disponible en los tipos de filtro que lo soportan (por ejemplo el filtro "ladder").',
+        examples: [{ label: 'Filtro con overdrive', code: 'note("{f g g c d a a#}%16").s("supersaw").lpf(150).ftype(\'ladder\').drive("<.5 4>")' }],
+      },
+      {
+        name: '.djf()',
+        syntax: '.djf(0-1)',
+        description: 'Filtro de un solo mando al estilo de un mezclador de DJ: por debajo de 0.5 actúa como paso-bajo, por encima de 0.5 como paso-alto.',
+        examples: [{ label: 'Barrido de DJ filter', code: 'n(irand(16).seg(8)).scale("d:phrygian").s("supersaw").djf("<.5 .3 .2 .75>")' }],
+      },
+      {
+        name: '.ftype()',
+        syntax: '.ftype("12db" | "ladder" | "24db")',
+        description: 'Elige el algoritmo del filtro paso-bajo/paso-alto. El filtro "ladder" (escalera) es más agresivo/colorido que el estándar de 12dB o 24dB por octava.',
+        examples: [{ label: 'Comparar tipos de filtro', code: 'note("c f g g a c d4").fast(2).sound(\'sawtooth\').lpf(200).lpenv(3).ftype("<ladder 12db 24db>")' }],
+      },
+      {
+        name: '.fanchor()',
+        syntax: '.fanchor(0-1)',
+        description: 'Controla el centro de la envolvente del filtro: 0 = unipolar positiva, .5 = bipolar (por defecto), 1 = unipolar negativa. Cambia si la envolvente empuja la frecuencia de corte solo hacia arriba, hacia ambos lados, o solo hacia abajo.',
+        examples: [],
+      },
+      {
+        name: '.hpattack() .hpdecay() .hpsustain() .hprelease()',
+        syntax: '.hpattack(t).hpdecay(t).hpsustain(nivel).hprelease(t)',
+        description: 'Envolvente ADSR aplicada a la frecuencia de corte del filtro paso-alto (.hpf()) — igual que la envolvente equivalente para paso-bajo y paso-banda.',
+        examples: [],
+      },
+      {
+        name: '.hprate() .hpdepth() .hpshape() .hpskew() .hpsync() .hpdc() .hpdepthfrequency()',
+        syntax: '.hprate(hz)',
+        description: 'LFO que modula la frecuencia de corte del filtro paso-alto: mismos parámetros que su equivalente en el paso-bajo/paso-banda (velocidad, sincronía a ciclos, profundidad, forma e inclinación de la onda).',
+        examples: [{ label: 'Barrido del corte con LFO', code: 'note("<c c c# c c c4>*16").s("sawtooth").hpf(600).hpdepthfrequency("<200 500 100 0>")' }],
+      },
+      {
+        name: '.duckattack() .duckonset() .duckdepth()',
+        syntax: '.duckattack(t).duckonset(t).duckdepth(0-1)',
+        description:
+          'Forma de la envolvente del "ducking" (sidechain) creado por .duckorbit(): duckonset es el tiempo hasta llegar al volumen más bajo, duckattack el tiempo para volver al volumen normal, y duckdepth cuánto se reduce el volumen (0 a 1). Se pueden variar por orbit con ":" en la mini-notación.',
+        examples: [{ label: 'Sidechain con forma ajustada', code: '$: n(run(16)).scale("c:minor:pentatonic").s("sawtooth").delay(.7).orbit(2)\n$: s("bd:4!4").duckorbit(2).duckonset(0.01).duckattack(0.2).duckdepth(1)' }],
+      },
+      {
+        name: '.delaytime() / .delayfeedback() / .delaysync()',
+        syntax: '.delaytime(seg) / .delayfeedback(0-1) / .delaysync(ciclos)',
+        description:
+          'Formas de fijar por separado los parámetros de .delay() en vez de usar el formato corto "nivel:tiempo:feedback": delaytime en segundos, delayfeedback la realimentación (¡cuidado con valores ≥1, se retroalimenta sin control!), delaysync fija el tiempo en ciclos en vez de segundos.',
+        examples: [{ label: 'Delay con feedback creciente', code: 's("bd").delay(.25).delayfeedback("<.25 .5 .75 1>")' }],
+      },
+      {
+        name: '.distortvol()',
+        syntax: '.distortvol(cantidad)',
+        description: 'Ganancia de salida (postgain) de la distorsión por waveshaping — para compensar el volumen extra que añade .distort().',
+        examples: [{ label: 'Distorsión con volumen controlado', code: 's("bd*4").bank("tr909").distort(2).distortvol(0.8)' }],
       },
     ],
   },
@@ -588,6 +732,36 @@ export const referenceCategories: ReferenceCategory[] = [
         description: 'Genera una estructura rítmica a partir de las posiciones (por número de paso) dentro de un total de pasos por ciclo — otra forma de construir ritmos además de la mini-notación o euclid().',
         examples: [{ label: 'Bombo en los pasos 0, 7 y 10 de 16', code: 's("bd").beat("0,7,10", 16)' }],
       },
+      {
+        name: '.fastChunk()',
+        syntax: '.fastChunk(n, fn)',
+        description: 'Como .chunk(), pero sin repetir los ciclos del patrón fuente para cada tanda de partes — el patrón avanza con normalidad mientras la parte transformada rota.',
+        examples: [],
+      },
+      {
+        name: '.fastGap()',
+        syntax: '.fastGap(factor)',
+        description: 'Acelera el patrón como .fast(), pero en vez de repetirlo varias veces dentro del ciclo, lo comprime una sola vez dejando un hueco de silencio en el resto del ciclo.',
+        examples: [{ label: 'Comprimido en la primera mitad', code: 's("bd sd").fastGap(2)' }],
+      },
+      {
+        name: '.focus()',
+        syntax: '.focus(inicio, fin)',
+        description: 'Parecido a .compress(), pero sin dejar huecos de silencio — y el intervalo de "foco" puede ser mayor que un ciclo entero.',
+        examples: [{ label: 'Enfocar un cuarto de ciclo', code: 's("bd hh sd hh").focus(1/4, 3/4)' }],
+      },
+      {
+        name: 'each()',
+        syntax: 'each(fn)',
+        description: 'Aplica una función a cada patrón activo por separado (a diferencia de all(), que los agrupa primero en un único stack). También requiere que los patrones estén etiquetados con $:.',
+        examples: [],
+      },
+      {
+        name: '.hurry()',
+        syntax: '.hurry(factor)',
+        description: 'Combina .fast() y .speed(): acelera el patrón Y la reproducción del propio sample a la vez, en vez de solo repetirlo más rápido.',
+        examples: [{ label: 'Aceleración combinada', code: 's("bd sd:2").hurry("<1 2 4 3>")' }],
+      },
     ],
   },
   {
@@ -631,6 +805,12 @@ export const referenceCategories: ReferenceCategory[] = [
         syntax: 'cosine | cosine2',
         description: 'Onda coseno continua — como sine pero desfasada 90°. cosine da salida entre 0 y 1; cosine2 entre -1 y 1.',
         examples: [{ label: 'Seno y coseno combinados', code: 'n(stack(sine,cosine).segment(16).range(0,15)).scale("C:minor")' }],
+      },
+      {
+        name: '.fromBipolar()',
+        syntax: '.fromBipolar()',
+        description: 'Convierte una señal bipolar (rango -1 a 1, como sine2) a unipolar (rango 0 a 1) — la conversión inversa a lo que hacen las variantes con sufijo 2.',
+        examples: [],
       },
     ],
   },
@@ -833,6 +1013,24 @@ export const referenceCategories: ReferenceCategory[] = [
         description: 'take() extrae los primeros (o últimos, con n negativo) n pasos. drop() los elimina.',
         examples: [{ label: 'Solo los 2 primeros pasos', code: '"bd cp ht mt".take("2").sound()' }],
       },
+      {
+        name: '.extend()',
+        syntax: '.extend(factor)',
+        description: 'Similar a .fast() en que aumenta la densidad, pero también aumenta el número de pasos en la misma proporción — a diferencia de fast(), que comprime el contenido dentro del mismo número de pasos.',
+        examples: [{ label: 'Comparar con stepcat', code: 'stepcat(\n  sound("bd bd - cp").extend(2),\n  sound("bd - sd -")\n).pace(8)' }],
+      },
+      {
+        name: '.drop()',
+        syntax: '.drop(n)',
+        description: 'Elimina n pasos del patrón: un número positivo los quita del principio, uno negativo del final.',
+        examples: [{ label: 'Quitar el primer paso', code: '"tha dhi thom nam".drop("1").sound().bank("mridangam")' }],
+      },
+      {
+        name: '.grow()',
+        syntax: '.grow(n)',
+        description: 'Hace crecer el patrón progresivamente, paso a paso, hasta llegar al patrón completo — un número negativo lo hace crecer desde el final en vez del principio.',
+        examples: [{ label: 'Crecimiento progresivo', code: '"tha dhi thom nam".grow("1").sound().bank("mridangam")' }],
+      },
     ],
   },
   {
@@ -926,6 +1124,12 @@ export const referenceCategories: ReferenceCategory[] = [
         description: 'Valor del acelerómetro del dispositivo en cada eje, como señal continua entre 0 y 1. Alias cortos: accX, accY, accZ.',
         examples: [{ label: 'Melodía controlada por el movimiento', code: 'n(accelerationX.segment(4).range(0,7)).scale("C:minor")' }],
       },
+      {
+        name: 'gravityX / Y / Z',
+        syntax: 'gravityX | gravityY | gravityZ',
+        description: 'Componente de la gravedad detectada por el dispositivo en cada eje, como señal continua entre 0 y 1. Alias cortos: gravX, gravY, gravZ.',
+        examples: [{ label: 'Melodía controlada por la inclinación', code: 'n(gravityX.segment(4).range(0,7)).scale("C:minor")' }],
+      },
     ],
   },
   {
@@ -952,6 +1156,24 @@ export const referenceCategories: ReferenceCategory[] = [
         syntax: '.ceil()',
         description: 'Redondea cada valor numérico del patrón hacia arriba (al entero superior).',
         examples: [{ label: 'Redondeo hacia arriba', code: 'note("42 42.1 42.5 43".ceil())' }],
+      },
+      {
+        name: '.div()',
+        syntax: '.div(cantidad)',
+        description: 'Divide cada valor numérico del patrón entre la cantidad indicada.',
+        examples: [],
+      },
+      {
+        name: '.floor()',
+        syntax: '.floor()',
+        description: 'Redondea cada valor numérico del patrón hacia abajo (al entero inferior).',
+        examples: [{ label: 'Redondeo hacia abajo', code: 'note("42 42.1 42.5 43".floor())' }],
+      },
+      {
+        name: 'gap()',
+        syntax: 'gap(pasos)',
+        description: 'No suena nada, pero ocupa el número de pasos indicado — un silencio con "peso" explícito, útil al construir patrones con stepcat()/pace(). Equivale a "~@n" en mini-notación.',
+        examples: [{ label: 'Silencio de 3 pasos', code: 'gap(3) // "~@3"' }],
       },
     ],
   },
@@ -980,6 +1202,27 @@ export const referenceCategories: ReferenceCategory[] = [
         description:
           'Señal que, combinada con la estructura de otro patrón (con .struct() o similar), da la duración de cada evento medida en ciclos por evento — el recíproco de per()/perCycle(). Útil para que la duración de una nota influya en otro parámetro, como su tono.',
         examples: [{ label: 'Notas cortas más agudas', code: 'sound("saw saw [saw saw] saw").note(cyclesPer.range(50, 100))' }],
+      },
+      {
+        name: 'env()',
+        syntax: '.env({ attack, decay, sustain, release, depth, control })',
+        description:
+          'Configura una envolvente genérica sobre cualquier control (por defecto, el último que se haya llamado antes de .env()), con más parámetros que .adsr(): profundidad, curvas de ataque/decay/release independientes, y un id para poder referenciarla y actualizarla más tarde (por ejemplo dentro de un .sometimes()).',
+        examples: [{ label: 'Envolvente sobre el filtro', code: 's("saw").note("F1").lpf(500).env({ a: 1 })' }],
+      },
+      {
+        name: '.filter() / .filterValues() / .filterWhen()',
+        syntax: '.filter(hap => condición)',
+        description:
+          'Filtran eventos del patrón según una función arbitraria de JavaScript: .filter() recibe el evento (Hap) completo, .filterValues() solo su valor, y .filterWhen() solo su tiempo de inicio. Permiten lógica que la mini-notación no puede expresar.',
+        examples: [{ label: 'Quedarse solo con los hi-hats', code: 's("hh!7 oh").filter(hap => hap.value.s === \'hh\')' }],
+      },
+      {
+        name: 'drawLine()',
+        syntax: 'drawLine(patrón, caracteres)',
+        description:
+          'Herramienta de depuración: dibuja el patrón como una cadena de texto en la consola, un carácter por franja de tiempo ("|" separa ciclos, "-" mantiene el valor anterior, "." es silencio). Solo funciona bien con valores de un único carácter.',
+        examples: [{ label: 'Ver la estructura en la consola', code: 'const line = drawLine("0 [1 2 3]", 10) // |0--123|0--123\nconsole.log(line)\nsilence' }],
       },
     ],
   },
