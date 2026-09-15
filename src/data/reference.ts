@@ -240,4 +240,175 @@ export const referenceCategories: ReferenceCategory[] = [
       },
     ],
   },
+  {
+    id: 'combinators',
+    title: 'Combinadores de patrón',
+    summary:
+      'Funciones que combinan, repiten o transforman patrones enteros — la caja de herramientas estructural de Tidal/Strudel.',
+    entries: [
+      {
+        name: '.fast() / .slow()',
+        syntax: '.fast(factor) / .slow(factor)',
+        description: 'Acelera o ralentiza un patrón entero por un factor, a diferencia de * y / que solo actúan dentro de la mini-notación.',
+        examples: [{ label: 'Doble velocidad', code: 's("bd hh sd hh").fast(2)' }],
+      },
+      {
+        name: '.rev()',
+        syntax: '.rev()',
+        description: 'Invierte el orden de los eventos dentro de cada ciclo.',
+        examples: [{ label: 'Melodía al revés', code: 'note("c d e g").rev()' }],
+      },
+      {
+        name: '.every()',
+        syntax: '.every(n, fn)',
+        description: 'Aplica una función cada n ciclos (el resto de ciclos el patrón suena sin modificar).',
+        examples: [{ label: 'Invertir cada 3 ciclos', code: 'note("c d e g").every(3, rev)' }],
+      },
+      {
+        name: '.jux()',
+        syntax: '.jux(fn)',
+        description: 'Divide el patrón en dos copias, una por canal estéreo, y aplica fn solo al canal derecho.',
+        examples: [{ label: 'Estéreo con reverso a la derecha', code: 's("bd lt [~ ht] mt cp ~ bd hh").jux(rev)' }],
+      },
+      {
+        name: 'stack()',
+        syntax: 'stack(patrón1, patrón2, ...)',
+        description: 'Toca varios patrones a la vez, todos con la misma duración de ciclo. Equivalente funcional a las capas con $:.',
+        examples: [{ label: 'Tres capas simultáneas', code: 'stack("g3", "b3", ["e4", "d4"]).note()' }],
+      },
+      {
+        name: 'cat() / seq()',
+        syntax: 'cat(p1, p2, ...) / seq(p1, p2, ...)',
+        description: 'cat() (alias slowcat) toca un patrón distinto por ciclo. seq() (alias fastcat) comprime todos los patrones dentro de un único ciclo.',
+        examples: [
+          { label: 'Uno por ciclo', code: 'cat("e5", "b4", ["d5", "c5"]).note()' },
+          { label: 'Comprimidos en un ciclo', code: 'seq("e5", "b4", ["d5", "c5"]).note()' },
+        ],
+      },
+      {
+        name: '.off()',
+        syntax: '.off(tiempo, fn)',
+        description: 'Crea una copia del patrón desplazada en el tiempo (en fracción de ciclo) y le aplica una función — genera ecos estructurales o contrapuntos.',
+        examples: [{ label: 'Eco con quinta añadida', code: 'note("c e g").off(1/8, x=>x.add(7))' }],
+      },
+      {
+        name: '.struct()',
+        syntax: '.struct("x ~ x ~")',
+        description: 'Aplica una estructura rítmica externa (patrón booleano de x/~) a los valores del patrón.',
+        examples: [{ label: 'Ritmo gateado', code: 'note("c,eb,g").struct("x ~ x ~ ~ x ~ x")' }],
+      },
+      {
+        name: '.iter()',
+        syntax: '.iter(n)',
+        description: 'Divide el patrón en n subdivisiones y las va desplazando una posición en cada ciclo sucesivo.',
+        examples: [{ label: 'Rotación progresiva', code: 'note("0 1 2 3".scale("A:minor")).iter(4)' }],
+      },
+      {
+        name: '.ply()',
+        syntax: '.ply(n)',
+        description: 'Repite cada evento del patrón n veces dentro de su propio hueco temporal.',
+        examples: [{ label: 'Cada golpe repetido 3 veces', code: 's("bd ~ sd cp").ply("<1 2 3>")' }],
+      },
+      {
+        name: '.palindrome()',
+        syntax: '.palindrome()',
+        description: 'Aplica .rev() en ciclos alternos, creando un patrón que va y viene.',
+        examples: [{ label: 'Ida y vuelta', code: 'note("c d e g").palindrome()' }],
+      },
+    ],
+  },
+  {
+    id: 'signals',
+    title: 'Señales y modulación',
+    summary:
+      'Osciladores continuos (LFOs) que, a diferencia de los patrones discretos, tienen un valor en cada instante — ideales para modular parámetros suavemente.',
+    entries: [
+      {
+        name: 'sine, saw, square, tri',
+        syntax: 'sine | saw | square | tri',
+        description: 'Ondas continuas con salida entre 0 y 1 (variantes con sufijo 2, como sine2, dan -1 a 1). Se muestrean con .segment(n) si se quieren valores discretos, o se usan directamente para modular.',
+        examples: [
+          { label: 'Melodía desde una onda', code: 'n(sine.segment(16).range(0,15)).scale("C:minor")' },
+        ],
+      },
+      {
+        name: 'rand / perlin',
+        syntax: 'rand | perlin',
+        description: 'rand da números aleatorios continuos entre 0 y 1 en cada instante; perlin da ruido Perlin (aleatorio pero suave, sin saltos bruscos) — mejor para modulación orgánica.',
+        examples: [
+          { label: 'Filtro con ruido aleatorio', code: 's("bd*4,hh*8").cutoff(rand.range(500,8000))' },
+          { label: 'Filtro con Perlin (más suave)', code: 's("bd*4,hh*8").cutoff(perlin.range(500,8000))' },
+        ],
+      },
+      {
+        name: '.range()',
+        syntax: '.range(min, max)',
+        description: 'Reescala la salida de una señal (0 a 1) al rango indicado. Es como se convierte una onda en un LFO útil para un parámetro concreto.',
+        examples: [{ label: 'Filtro modulado en 4 ciclos', code: 'note("<c2 eb2 g2>*4").sound("sawtooth").lpf(sine.range(200,2000).slow(4))' }],
+      },
+    ],
+  },
+  {
+    id: 'randomness',
+    title: 'Aleatoriedad y condicionales',
+    summary: 'Funciones que introducen azar controlado o aplican transformaciones solo bajo ciertas condiciones.',
+    entries: [
+      {
+        name: '.degradeBy() / .degrade()',
+        syntax: '.degradeBy(0-1)',
+        description: 'Elimina eventos aleatoriamente con la probabilidad dada (0 = nunca, 1 = siempre). .degrade() es el atajo para degradeBy(0.5).',
+        examples: [{ label: 'Hi-hats con huecos', code: 's("hh*8").degradeBy(0.3)' }],
+      },
+      {
+        name: '.sometimes() / .sometimesBy()',
+        syntax: '.sometimesBy(0-1, fn)',
+        description: 'Aplica una función a una fracción aleatoria de los eventos. sometimes() equivale a sometimesBy(0.5, fn). También existen often/rarely/almostAlways/almostNever como atajos con distinta probabilidad.',
+        examples: [{ label: 'A veces más lento', code: 's("hh*8").sometimesBy(.4, x=>x.speed("0.5"))' }],
+      },
+      {
+        name: '.someCyclesBy()',
+        syntax: '.someCyclesBy(0-1, fn)',
+        description: 'Como sometimesBy, pero decide ciclo a ciclo en vez de evento a evento.',
+        examples: [{ label: 'Ciclo entero afectado a veces', code: 's("bd,hh*8").someCyclesBy(.3, x=>x.speed("0.5"))' }],
+      },
+      {
+        name: 'choose() / wchoose()',
+        syntax: 'choose(a, b, c) / wchoose([a,peso], ...)',
+        description: 'Elige aleatoriamente entre varias opciones en cada evento. wchoose() pondera la probabilidad de cada opción.',
+        examples: [{ label: 'Sonido aleatorio por golpe', code: 'note("c2 g2!2 d2 f1").s(choose("sine", "triangle", "bd:6"))' }],
+      },
+      {
+        name: '.when()',
+        syntax: '.when(patrón-booleano, fn)',
+        description: 'Aplica una función solo cuando el patrón de condición está en estado verdadero (1).',
+        examples: [{ label: 'Transponer en el segundo semiciclo', code: '"c3 eb3 g3".when("<0 1>/2", x=>x.sub("5")).note()' }],
+      },
+      {
+        name: '.mask()',
+        syntax: '.mask("1 0 1 1")',
+        description: 'Silencia los eventos donde la máscara vale 0 o ~, dejando pasar el resto — como struct pero solo puede quitar, no añadir eventos.',
+        examples: [{ label: 'Silenciar el segundo tiempo', code: 'note("c [eb,g] d [eb,g]").mask("<1 [0 1]>")' }],
+      },
+    ],
+  },
+  {
+    id: 'transport',
+    title: 'Reproducción y control global',
+    summary: 'Cómo controlar el tempo global y detener todo lo que suena.',
+    entries: [
+      {
+        name: 'setcpm() / setcps()',
+        syntax: 'setcpm(ciclos por minuto) / setcps(ciclos por segundo)',
+        description:
+          'Fijan el tempo global. No hay compases en Strudel, solo ciclos — setcpm(bpm/pulsos-por-ciclo) es la forma habitual de traducir un tempo en BPM tradicional.',
+        examples: [{ label: 'Tempo a 110bpm en compás de 4', code: 'setcpm(110/4)\ns("bd sd bd rim, hh*8")' }],
+      },
+      {
+        name: 'hush()',
+        syntax: 'hush()',
+        description: 'Detiene y silencia todos los patrones activos. Equivale a pulsar Stop.',
+        examples: [{ label: 'Parar todo', code: 'hush()' }],
+      },
+    ],
+  },
 ];
