@@ -80,14 +80,21 @@ export const referenceCategories: ReferenceCategory[] = [
       },
       {
         name: 'chord() / .voicing()',
-        syntax: "chord(\"Cmaj7\").voicing()",
+        syntax: 'chord("Cmaj7").voicing()',
         description:
-          'chord() genera acordes a partir de su nombre (cifrado americano); .voicing() los convierte en notas concretas repartidas en un registro razonable, listas para pasar a .sound() o combinarse en un stack().',
+          'chord() genera acordes a partir de su nombre (cifrado americano); .voicing() los convierte en notas concretas con buena conducción de voces (saltos mínimos entre acordes consecutivos), inspirado en cómo un pianista enlaza acordes. .anchor() fija la nota de referencia y .mode() controla si la voz superior/inferior se ancla por encima o por debajo.',
         examples: [
-          {
-            label: 'Progresión de acordes',
-            code: "let chords = chord(\"<Bbm9 Fm9>/4\")\nchords.voicing().sound(\"gm_epiano1\")",
-          },
+          { label: 'Progresión con buena conducción de voces', code: 'chord("<Am C D F Am E>").voicing().room(.5)' },
+          { label: 'Con instrumento', code: 'chord("<C Am F G>").voicing().s("gm_epiano1")' },
+        ],
+      },
+      {
+        name: '.transpose() / .scaleTranspose()',
+        syntax: '.transpose(semitonos) / .scaleTranspose(pasos)',
+        description:
+          'transpose() desplaza todas las notas un número de semitonos fijo (cromático). scaleTranspose() desplaza dentro de la escala activa por grados en vez de semitonos — mantiene las notas siempre dentro de la tonalidad.',
+        examples: [
+          { label: 'Transposición diatónica', code: 'note("c e g").scale("C:major").scaleTranspose("<0 -1 -2 -3>")' },
         ],
       },
     ],
@@ -408,6 +415,65 @@ export const referenceCategories: ReferenceCategory[] = [
         syntax: 'hush()',
         description: 'Detiene y silencia todos los patrones activos. Equivale a pulsar Stop.',
         examples: [{ label: 'Parar todo', code: 'hush()' }],
+      },
+    ],
+  },
+  {
+    id: 'visual',
+    title: 'Feedback visual',
+    summary:
+      'Visualizadores nativos de Strudel — además del resaltado de la mini-notación (que ya está siempre activo mientras suena).',
+    entries: [
+      {
+        name: '.pianoroll()',
+        syntax: '.pianoroll({ opciones })',
+        description:
+          'Dibuja el patrón como un rollo de piano que se desplaza. Por defecto se superpone a toda la página mientras suena (así funciona también en strudel.cc) — usa Stop o quita .pianoroll() para ocultarlo. Opciones útiles: cycles (ciclos visibles a la vez), labels (mostrar nombres de nota), vertical.',
+        examples: [{ label: 'Rollo de piano con etiquetas', code: 'note("c2 a2 eb2").euclid(5,8).s("sawtooth").pianoroll({ labels: 1 })' }],
+      },
+      {
+        name: '._scope()',
+        syntax: '._scope()',
+        description:
+          'Osciloscopio: dibuja la forma de onda real del audio. El prefijo _ hace que se dibuje en línea dentro del propio código en vez de superponerse a toda la página — útil para combinar varios visualizadores a la vez.',
+        examples: [{ label: 'Forma de onda de un synth', code: 's("sawtooth")._scope()' }],
+      },
+      {
+        name: '._spectrum()',
+        syntax: '._spectrum()',
+        description: 'Analizador de espectro: muestra el contenido en frecuencias del audio en tiempo real.',
+        examples: [{ label: 'Espectro de una melodía', code: 'n("<0 4 2 1>*3").scale("d3:minor:pentatonic").s("sine")._spectrum()' }],
+      },
+    ],
+  },
+  {
+    id: 'layering',
+    title: 'Capas y acumulación',
+    summary: 'Formas de superponer variaciones de un mismo patrón sobre sí mismo, en vez de reescribirlo entero.',
+    entries: [
+      {
+        name: '.superimpose()',
+        syntax: '.superimpose(fn)',
+        description: 'Superpone el resultado de aplicar fn al patrón, por encima del patrón original (que sigue sonando sin modificar).',
+        examples: [{ label: 'Capa transportada una quinta', code: 'note("c eb g").superimpose(x=>x.add(7))' }],
+      },
+      {
+        name: '.layer()',
+        syntax: '.layer(fn)',
+        description: 'Como superimpose, pero sin mantener el patrón original — solo suena el resultado de fn.',
+        examples: [{ label: 'Solo la capa transformada', code: 'note("c eb g").layer(x=>x.add("0,2"))' }],
+      },
+      {
+        name: '.echo()',
+        syntax: '.echo(repeticiones, tiempo, feedback)',
+        description: 'Superpone el patrón varias veces desplazado en el tiempo, bajando el volumen (velocity) en cada repetición — un eco estructural, no de audio.',
+        examples: [{ label: 'Triple eco', code: 's("bd sd").echo(3, 1/6, .8)' }],
+      },
+      {
+        name: '.echoWith()',
+        syntax: '.echoWith(repeticiones, tiempo, fn)',
+        description: 'Como echo, pero en vez de bajar el volumen aplica una función distinta (con el índice de repetición) en cada copia.',
+        examples: [{ label: 'Transporte progresivo', code: 'n("<0 [2 4]>").echoWith(4, 1/8, (p,i)=>p.add(i*2)).scale("C:minor")' }],
       },
     ],
   },
