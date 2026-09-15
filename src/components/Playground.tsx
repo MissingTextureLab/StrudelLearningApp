@@ -31,6 +31,7 @@ export const Playground = forwardRef<PlaygroundHandle, PlaygroundProps>(function
   const [error, setError] = useState<string | null>(null);
   const [isNaming, setIsNaming] = useState(false);
   const [patternName, setPatternName] = useState('');
+  const [isLoadingSamples, setIsLoadingSamples] = useState(true);
 
   useImperativeHandle(ref, () => ({
     loadCode: (code: string, autoplay = true) => {
@@ -66,6 +67,7 @@ export const Playground = forwardRef<PlaygroundHandle, PlaygroundProps>(function
       afterEval: () => setError(null),
     }) as unknown as StrudelMirrorInstance;
     editorRef.current = editor;
+    prebake().then(() => setIsLoadingSamples(false));
 
     return () => {
       editor.stop();
@@ -104,6 +106,9 @@ export const Playground = forwardRef<PlaygroundHandle, PlaygroundProps>(function
           {isPlaying ? '● reproduciendo' : '○ detenido'} — Ctrl/Alt+Enter para evaluar, Ctrl/Alt+. para parar
         </span>
       </div>
+      {isLoadingSamples && (
+        <div className="text-xs text-purple-400">⏳ Cargando muestras y soundfonts (piano, batería, sintetizadores...) — puede tardar unos segundos la primera vez.</div>
+      )}
       {isNaming && (
         <div className="flex items-center gap-2">
           <input
