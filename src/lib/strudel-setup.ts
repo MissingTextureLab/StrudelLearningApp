@@ -1,4 +1,5 @@
 import { evalScope } from '@strudel/core';
+import { miniAllStrings } from '@strudel/mini';
 import {
   aliasBank,
   getAudioContext,
@@ -21,6 +22,7 @@ let prebaked: Promise<void> | null = null;
 export function prebake(): Promise<void> {
   if (!prebaked) {
     initAudioOnFirstClick();
+    miniAllStrings();
     prebaked = Promise.all([
       evalScope(import('@strudel/core'), import('@strudel/mini'), import('@strudel/tonal'), import('@strudel/webaudio')),
       registerSynthSounds(),

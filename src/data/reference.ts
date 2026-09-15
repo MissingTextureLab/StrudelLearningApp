@@ -97,6 +97,13 @@ export const referenceCategories: ReferenceCategory[] = [
           { label: 'Transposición diatónica', code: 'note("c e g").scale("C:major").scaleTranspose("<0 -1 -2 -3>")' },
         ],
       },
+      {
+        name: 'freq()',
+        syntax: 'freq(hercios)',
+        description:
+          'Controla el tono directamente en Hz, sin pasar por notas ni escalas. note() por debajo es en realidad freq() + una conversión: MIDI 69 (A4) = 440Hz, y cada octava dobla la frecuencia. Útil para sonido más "físico" o microtonal.',
+        examples: [{ label: 'Frecuencias directas', code: 'freq("200 300 400 500").s("sine")' }],
+      },
     ],
   },
   {
@@ -322,6 +329,16 @@ export const referenceCategories: ReferenceCategory[] = [
         description: 'Aplica .rev() en ciclos alternos, creando un patrón que va y viene.',
         examples: [{ label: 'Ida y vuelta', code: 'note("c d e g").palindrome()' }],
       },
+      {
+        name: 'Alineación de patrones (.add.in/.out/.mix/.squeeze)',
+        syntax: '.add.squeeze(patrón) / .add.mix(patrón) / ...',
+        description:
+          'Cuando combinas dos patrones de distinta longitud (con add, struct, etc.), Strudel necesita decidir cómo alinearlos. Por defecto ("in") reparte los eventos del patrón derecho dentro de cada evento del izquierdo. squeeze comprime un ciclo entero del patrón derecho dentro de cada evento del izquierdo — útil para que una secuencia corta "quepa" entera en cada paso de otra.',
+        examples: [
+          { label: 'Alineación por defecto (in)', code: 'note("0 1 2".add("10 20"))' },
+          { label: 'squeeze: ciclo entero por paso', code: 'note("0 1 2".add.squeeze("10 20"))' },
+        ],
+      },
     ],
   },
   {
@@ -474,6 +491,44 @@ export const referenceCategories: ReferenceCategory[] = [
         syntax: '.echoWith(repeticiones, tiempo, fn)',
         description: 'Como echo, pero en vez de bajar el volumen aplica una función distinta (con el índice de repetición) en cada copia.',
         examples: [{ label: 'Transporte progresivo', code: 'n("<0 [2 4]>").echoWith(4, 1/8, (p,i)=>p.add(i*2)).scale("C:minor")' }],
+      },
+    ],
+  },
+  {
+    id: 'stepwise',
+    title: 'Funciones stepwise (avanzado)',
+    summary:
+      'Funcionalidad experimental: en vez de razonar solo en ciclos, permite razonar en "pasos" (steps) — útil para polimetría y para estirar/encoger patrones sin tocar su contenido.',
+    entries: [
+      {
+        name: '.pace()',
+        syntax: '.pace(pasos-por-ciclo)',
+        description: 'Ajusta la velocidad de reproducción para que quepan exactamente n pasos por ciclo — la base de las demás funciones stepwise.',
+        examples: [{ label: '4 pasos por ciclo', code: 's("bd sd cp").pace(4)' }],
+      },
+      {
+        name: 'stepcat()',
+        syntax: 'stepcat([pasos, patrón], ...)',
+        description: 'Concatena patrones proporcionalmente a su número de pasos (en vez de darles a todos el mismo espacio, como hace cat()).',
+        examples: [{ label: 'Proporción 3 a 1', code: 'stepcat([3,"e3"],[1,"g3"]).note()' }],
+      },
+      {
+        name: 'polymeter() / pm()',
+        syntax: 'polymeter(patrón1, patrón2, ...)',
+        description: 'Combina patrones con distinto número de pasos manteniendo el mismo pulso de paso — la esencia de la "polimetría": mismo tempo de paso, distinta longitud de frase.',
+        examples: [{ label: 'Polimetría de 3 contra 2', code: 'polymeter("c eb g", "c2 g2").note()' }],
+      },
+      {
+        name: '.expand() / .contract()',
+        syntax: '.expand(factor) / .contract(factor)',
+        description: 'Aumenta o reduce el número de pasos de un patrón por un factor, estirando o encogiendo su resolución rítmica.',
+        examples: [{ label: 'Expansión variable', code: 's("tha dhi thom nam").bank("mridangam").expand("3 2 1 1 2 3").pace(8)' }],
+      },
+      {
+        name: '.take() / .drop()',
+        syntax: '.take(n) / .drop(n)',
+        description: 'take() extrae los primeros (o últimos, con n negativo) n pasos. drop() los elimina.',
+        examples: [{ label: 'Solo los 2 primeros pasos', code: '"bd cp ht mt".take("2").sound()' }],
       },
     ],
   },
