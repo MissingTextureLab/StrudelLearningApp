@@ -26,6 +26,7 @@ export interface Exercise {
 export interface Lesson {
   id: string;
   order: number;
+  block: string;
   title: string;
   concept: string[];
   examples: ReferenceExample[];
