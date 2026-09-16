@@ -1,32 +1,29 @@
-# React + TypeScript + Vite
+# Strudel Learning App
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Una app para aprender [live coding](https://strudel.cc) musical con [Strudel](https://strudel.cc) (el puerto en JavaScript de TidalCycles), pensada para quien parte de cero y quiere aprender en español.
 
-Currently, two official plugins are available:
+**[▶ Probarla en vivo](https://missingtexturelab.github.io/StrudelLearningApp/)**
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Qué incluye
 
-## React Compiler
+- **Lecciones** — una progresión guiada, de "qué es el live coding" hasta funciones de patrón, con ejemplos y ejercicios cargables con un clic.
+- **Playground** — un editor con audio real (basado en `@strudel/codemirror` + Web Audio), con los mismos samples y soundfonts que usa strudel.cc.
+- **Referencia** — cientos de funciones de la API de Strudel documentadas en español, con sintaxis, descripción y ejemplos ejecutables, organizadas por categoría.
+- **Mis patrones** — guarda tus propios patrones en el navegador (`localStorage`, no hay backend ni cuenta).
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Desarrollo
 
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+npm install
+npm run dev
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+Otros comandos: `npm run build` (compila a `dist/`), `npm run preview` (sirve ese build localmente), `npm run lint` (oxlint).
+
+## Stack
+
+React 19 + TypeScript + Vite + Tailwind CSS, sobre los paquetes `@strudel/*` (core, mini, tonal, webaudio, codemirror, midi, osc, hydra, soundfonts, transpiler).
+
+## Despliegue
+
+Cada push a `master` reconstruye y publica la app en GitHub Pages automáticamente (ver `.github/workflows/deploy.yml`). Al ser un sitio de proyecto (`usuario.github.io/StrudelLearningApp/`), `vite.config.ts` fija `base: '/StrudelLearningApp/'` en producción — si el repositorio cambia de nombre, ese valor hay que actualizarlo ahí.
