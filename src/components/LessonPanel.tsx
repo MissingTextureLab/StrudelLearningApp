@@ -40,15 +40,20 @@ export function LessonPanel({ onLoadCode }: LessonPanelProps) {
                 type="button"
                 aria-expanded={isOpen}
                 onClick={() => setOpenBlocks((prev) => ({ ...prev, [block.name]: !prev[block.name] }))}
-                className={`flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-mint-400/60 ${
+                className={`flex w-full items-start gap-2 rounded-lg px-2.5 py-1.5 text-left text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-mint-400/60 ${
                   isOpen ? 'text-iris-300' : 'text-zinc-400 hover:text-zinc-200'
                 }`}
               >
-                <span aria-hidden="true" className={`text-mint-400 transition-transform ${isOpen ? 'rotate-90' : ''}`}>
+                <span
+                  aria-hidden="true"
+                  className={`shrink-0 pt-px text-mint-400 transition-transform ${isOpen ? 'rotate-90' : ''}`}
+                >
                   ▶
                 </span>
                 <span className="flex-1">{block.name}</span>
-                <span className="text-[10px] font-normal text-zinc-600">{block.lessons.length}</span>
+                <span className="shrink-0 pt-px text-right text-[10px] font-normal text-zinc-600">
+                  {block.lessons.length}
+                </span>
               </button>
               {isOpen && (
                 <div role="tablist" aria-label={block.name} className="flex flex-wrap gap-1.5 px-2.5 pb-2">
