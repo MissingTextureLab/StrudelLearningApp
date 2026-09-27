@@ -56,7 +56,7 @@ export function LessonPanel({ onLoadCode }: LessonPanelProps) {
                 </span>
               </button>
               {isOpen && (
-                <div role="tablist" aria-label={block.name} className="flex flex-wrap gap-1.5 px-2.5 pb-2">
+                <div role="tablist" aria-label={block.name} className="flex flex-col gap-1 px-2.5 pb-2">
                   {block.lessons.map((l) => (
                     <button
                       key={l.id}
@@ -64,7 +64,7 @@ export function LessonPanel({ onLoadCode }: LessonPanelProps) {
                       role="tab"
                       aria-selected={l.id === activeId}
                       onClick={() => selectLesson(l.id)}
-                      className={`rounded-md border px-2.5 py-1 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-mint-400/60 ${
+                      className={`w-full rounded-md border px-2.5 py-1 text-left text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-mint-400/60 ${
                         l.id === activeId
                           ? 'border-mint-400/30 bg-mint-400/10 text-mint-200'
                           : 'border-transparent text-zinc-500 hover:bg-zinc-800/50 hover:text-zinc-300'
