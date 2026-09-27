@@ -135,9 +135,16 @@ export function prebake(): Promise<void> {
         { prebake: true },
       ),
       samples('github:tidalcycles/dirt-samples'),
-    ]).then(() => {
-      aliasBank(`${CDN}/tidal-drum-machines-alias.json`);
-    });
+    ])
+      .then(() => {
+        aliasBank(`${CDN}/tidal-drum-machines-alias.json`);
+      })
+      .catch((err) => {
+        // Don't cache a failed load (e.g. transient CDN/network hiccup) —
+        // let the next prebake() call start over from scratch.
+        prebaked = null;
+        throw err;
+      });
   }
   return prebaked;
 }

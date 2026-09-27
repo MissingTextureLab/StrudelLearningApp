@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { lessons } from '../data/lessons';
+import { renderInlineCode } from '../lib/inlineCode';
 
 interface LessonPanelProps {
   onLoadCode: (code: string) => void;
@@ -34,14 +35,18 @@ export function LessonPanel({ onLoadCode }: LessonPanelProps) {
         {blocks.map((block) => {
           const isOpen = !!openBlocks[block.name];
           return (
-            <div key={block.name} className="rounded-md border border-zinc-800 bg-zinc-900/40">
+            <div key={block.name} className="rounded-lg border border-zinc-800/80">
               <button
                 type="button"
                 aria-expanded={isOpen}
                 onClick={() => setOpenBlocks((prev) => ({ ...prev, [block.name]: !prev[block.name] }))}
-                className="flex w-full items-center gap-2 px-2.5 py-1.5 text-left text-xs font-semibold uppercase tracking-wide text-zinc-400 hover:text-zinc-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
+                className={`flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-mint-400/60 ${
+                  isOpen ? 'text-iris-300' : 'text-zinc-400 hover:text-zinc-200'
+                }`}
               >
-                <span aria-hidden="true" className={`transition-transform ${isOpen ? 'rotate-90' : ''}`}>▶</span>
+                <span aria-hidden="true" className={`text-mint-400 transition-transform ${isOpen ? 'rotate-90' : ''}`}>
+                  ▶
+                </span>
                 <span className="flex-1">{block.name}</span>
                 <span className="text-[10px] font-normal text-zinc-600">{block.lessons.length}</span>
               </button>
@@ -54,8 +59,10 @@ export function LessonPanel({ onLoadCode }: LessonPanelProps) {
                       role="tab"
                       aria-selected={l.id === activeId}
                       onClick={() => selectLesson(l.id)}
-                      className={`rounded-md px-2.5 py-1 text-xs font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 ${
-                        l.id === activeId ? 'bg-purple-600 text-white' : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
+                      className={`rounded-md border px-2.5 py-1 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-mint-400/60 ${
+                        l.id === activeId
+                          ? 'border-mint-400/30 bg-mint-400/10 text-mint-200'
+                          : 'border-transparent text-zinc-500 hover:bg-zinc-800/50 hover:text-zinc-300'
                       }`}
                     >
                       {l.title}
@@ -68,27 +75,29 @@ export function LessonPanel({ onLoadCode }: LessonPanelProps) {
         })}
       </div>
 
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-3 border-l-2 border-iris-900/70 pl-4">
         {lesson.concept.map((paragraph, i) => (
-          <p key={i} className="text-sm leading-relaxed text-zinc-300">
-            {paragraph}
+          <p key={i} className="font-sans text-sm leading-relaxed text-zinc-300">
+            {renderInlineCode(paragraph)}
           </p>
         ))}
       </div>
 
       {lesson.examples.length > 0 && (
         <div className="flex flex-col gap-1.5">
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Ejemplos</h3>
+          <h3 className="font-sans text-xs font-medium text-zinc-500">Ejemplos</h3>
           {lesson.examples.map((example) => (
             <button
               key={example.label}
               type="button"
               onClick={() => onLoadCode(example.code)}
-              className="group flex items-center gap-2 rounded border border-zinc-800 bg-zinc-900 px-2 py-1.5 text-left hover:border-purple-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
+              className="group flex items-center gap-2 rounded-md border border-zinc-800/80 bg-zinc-900/30 px-2 py-1.5 text-left transition-colors hover:border-mint-400/30 hover:bg-mint-400/5 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-mint-400/60"
             >
-              <span aria-hidden="true" className="text-purple-400 group-hover:text-purple-300">▶</span>
+              <span aria-hidden="true" className="text-mint-400 group-hover:text-mint-300">
+                ▶
+              </span>
               <span className="flex-1 truncate font-mono text-xs text-zinc-300">{example.code.split('\n')[0]}</span>
-              <span className="shrink-0 text-[10px] text-zinc-600">{example.label}</span>
+              <span className="shrink-0 font-sans text-[10px] text-zinc-600">{example.label}</span>
             </button>
           ))}
         </div>
@@ -96,16 +105,16 @@ export function LessonPanel({ onLoadCode }: LessonPanelProps) {
 
       {lesson.exercises.length > 0 && (
         <div className="flex flex-col gap-2">
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Ejercicios</h3>
+          <h3 className="font-sans text-xs font-medium text-zinc-500">Ejercicios</h3>
           {lesson.exercises.map((exercise, i) => (
-            <div key={i} className="rounded-md border border-zinc-800 bg-zinc-900/50 px-3 py-2">
-              <p className="text-sm text-zinc-300">{exercise.prompt}</p>
+            <div key={i} className="rounded-lg border border-zinc-800/80 bg-zinc-900/20 px-3 py-2">
+              <p className="font-sans text-sm text-zinc-300">{renderInlineCode(exercise.prompt)}</p>
               <div className="mt-2 flex flex-wrap gap-2">
                 {exercise.starterCode && (
                   <button
                     type="button"
                     onClick={() => onLoadCode(exercise.starterCode!)}
-                    className="rounded bg-zinc-800 px-2 py-1 text-xs text-zinc-300 hover:bg-zinc-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
+                    className="rounded-md border border-zinc-800 px-2 py-1 font-sans text-xs text-zinc-400 transition-colors hover:border-zinc-600 hover:bg-zinc-800/40 hover:text-zinc-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-mint-400/60"
                   >
                     Cargar punto de partida
                   </button>
@@ -115,14 +124,14 @@ export function LessonPanel({ onLoadCode }: LessonPanelProps) {
                     type="button"
                     aria-expanded={!!openHints[i]}
                     onClick={() => setOpenHints((prev) => ({ ...prev, [i]: !prev[i] }))}
-                    className="rounded bg-zinc-800 px-2 py-1 text-xs text-zinc-300 hover:bg-zinc-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
+                    className="rounded-md border border-zinc-800 px-2 py-1 font-sans text-xs text-zinc-400 transition-colors hover:border-zinc-600 hover:bg-zinc-800/40 hover:text-zinc-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-mint-400/60"
                   >
                     {openHints[i] ? 'Ocultar pista' : 'Ver pista'}
                   </button>
                 )}
               </div>
               {openHints[i] && exercise.hint && (
-                <pre className="mt-2 overflow-x-auto rounded bg-black/40 px-2 py-1.5 text-xs text-purple-300">
+                <pre className="mt-2 overflow-x-auto rounded-md border border-zinc-800/80 bg-black/30 px-2 py-1.5 text-xs text-mint-300">
                   {exercise.hint}
                 </pre>
               )}

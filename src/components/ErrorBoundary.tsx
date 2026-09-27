@@ -22,16 +22,16 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   render() {
     if (this.state.error) {
       return (
-        <div className="rounded-lg border border-red-800 bg-red-950/50 p-4">
+        <div className="rounded-lg border-l-2 border-red-400/70 bg-zinc-900/40 p-4 font-sans">
           <p className="text-sm font-medium text-red-300">El playground ha fallado al iniciar el motor de audio.</p>
-          <p className="mt-1 text-xs text-red-400">{this.state.error.message}</p>
+          <p className="mt-1 text-xs text-red-400/90">{this.state.error.message}</p>
           <button
             type="button"
             onClick={() => {
               this.setState({ error: null });
               window.location.reload();
             }}
-            className="mt-3 rounded-md bg-red-800 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
+            className="mt-3 rounded-md border border-red-400/30 bg-red-400/10 px-3 py-1.5 text-sm font-medium text-red-200 transition-colors hover:border-red-400/50 hover:bg-red-400/20 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-red-400/60"
           >
             Recargar página
           </button>

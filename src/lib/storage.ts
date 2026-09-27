@@ -41,3 +41,38 @@ export function renamePattern(id: string, name: string): SavedPattern[] {
   persist(next);
   return next;
 }
+
+export function exportPatternsJson(): string {
+  return JSON.stringify(getSavedPatterns(), null, 2);
+}
+
+function isSavedPatternShape(value: unknown): value is Pick<SavedPattern, 'name' | 'code'> {
+  if (typeof value !== 'object' || value === null) return false;
+  const p = value as Record<string, unknown>;
+  return typeof p.name === 'string' && typeof p.code === 'string';
+}
+
+// Imports patterns from a previously exported JSON file, merging them with
+// what's already saved. Imported patterns always get a fresh id (so
+// re-importing the same file, or importing on a different browser that
+// happens to share an id, never overwrites an existing pattern).
+export function importPatternsJson(json: string): SavedPattern[] {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(json);
+  } catch {
+    throw new Error('El archivo no contiene JSON válido.');
+  }
+  if (!Array.isArray(parsed) || !parsed.every(isSavedPatternShape)) {
+    throw new Error('El archivo no tiene el formato esperado (una lista de patrones exportados desde esta app).');
+  }
+  const imported: SavedPattern[] = parsed.map((p) => ({
+    id: crypto.randomUUID(),
+    name: p.name,
+    code: p.code,
+    updatedAt: typeof (p as SavedPattern).updatedAt === 'number' ? (p as SavedPattern).updatedAt : Date.now(),
+  }));
+  const next = [...imported, ...getSavedPatterns()];
+  persist(next);
+  return next;
+}
